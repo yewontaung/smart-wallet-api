@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship
 
 from app.data.base import AuditableModel
 from app.data.enums import (
