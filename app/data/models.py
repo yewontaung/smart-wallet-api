@@ -104,7 +104,7 @@ class Wallet(AuditableModel, table=True):
         "foreign_keys": "[Wallet.wallet_user_id]"
     })
 
-    approved_by:Optional[int] = Field(nullabel=True, foreign_key="manageraccount.user_id")
+    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.user_id")
     approver:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[Wallet.approved_by]"
     })
@@ -179,7 +179,7 @@ class BusinessProfile(AuditableModel, table=True):
         "foreign_keys": "[BusinessProfile.owner_id]"
     })
 
-    approved_by:Optional[int] = Field(nullabel=True, foreign_key="manageraccount.user_id")
+    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.user_id")
     approver:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[BusinessProfile.approved_by]"
     })

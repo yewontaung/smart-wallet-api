@@ -9,7 +9,7 @@ from app.services import account_service, business_service
 from app.services.action import wallet_action_service
 
 
-router = APIRouter("/action")
+router = APIRouter(prefix="/action")
 
 @router.get("/receiver")
 def search_receiver(search:ReceiverSearch, session:Session = Depends(get_session)):

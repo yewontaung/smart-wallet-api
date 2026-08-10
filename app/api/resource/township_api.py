@@ -8,7 +8,7 @@ from app.dtos.shared.searches import LocationSearch
 from app.services.resource import township_service
 
 
-router = APIRouter(prefix="/districts")
+router = APIRouter(prefix="/townships")
 
 @router.get("/")
 def search(
@@ -20,7 +20,7 @@ def search(
     return township_service.search(search, page, size, session)
 
 @router.post("/")
-def add_district(
+def add_township(
     form:TownshipForm,
     auth_user:ManagerAuthentication,
     session:Session = Depends(get_session)

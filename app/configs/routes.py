@@ -19,10 +19,10 @@ from app.api.wallet_user import (
     support_chat_api,)
 
 
-annonymous_router = APIRouter()
-resource_router = APIRouter(prefix="/resources")
-manager_router = APIRouter(prefix="/manager")
-wallet_user_router = APIRouter(prefix="/wallet-user")
+annonymous_router = APIRouter(tags=["annonymous",])
+resource_router = APIRouter(prefix="/resources", tags=["resources"])
+manager_router = APIRouter(prefix="/manager", tags=["manager"])
+wallet_user_router = APIRouter(prefix="/wallet-user", tags=["wallet-user"])
 
 # annonymous routes registration
 annonymous_router.include_router(prefix="/manager", router=manager_auth_api.router)

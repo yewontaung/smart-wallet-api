@@ -8,7 +8,7 @@ from app.dtos.manager.searches import ManagerSearch
 from app.services import manager_service
 
 
-router = APIRouter("/managers")
+router = APIRouter(prefix="/managers")
 
 @router.get("/")
 def search(
