@@ -7,7 +7,7 @@ from app.dtos.base import BaseDto
 
 class TransactionSearch(BaseDto):
 
-    q:Optional[str] = None # full name, note
+    q:Optional[str] = None # full name, note, phone no
 
     operation_id:Optional[int] = None
 
@@ -30,4 +30,15 @@ class MessageSearch(BaseDto):
 
     date_from:Optional[datetime] = None
     date_to:Optional[datetime] = None
-    
+
+class LocationSearch(BaseDto):
+    q:Optional[str] = None
+
+    users_from:Optional[int] = None
+    users_to:Optional[int] = None
+
+    date_from:Optional[datetime] = None
+    date_to:Optional[datetime] = None
+
+class ReceiverSearch(BaseDto):
+    phone_no:str

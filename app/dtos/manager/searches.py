@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from app.data.enums import ManagerRole, WalletUserType
+from app.data.enums import ManagerRole, WalletUserStatus, WalletUserType
 from app.dtos.base import BaseDto
 
 
@@ -15,6 +15,8 @@ class ManagerSearch(BaseDto):
 class AccountSearch(BaseDto):
     q:Optional[str] = None # phone no., full name, nick name
     account_type:Optional[WalletUserType] = None
+    account_status:Optional[WalletUserStatus] = None
+
     created_from:Optional[datetime] = None
     created_to:Optional[datetime] = None
     balance_from:Optional[float] = None

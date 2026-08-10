@@ -31,6 +31,16 @@ class BusinessType(str, Enum):
     STANDALONE = "Standalone"
     ORGANIZATION = "Organization"
 
+class BusinessApprovalStatus(str, Enum):
+    PENDING = "Pending"
+    UNDER_REVIEW = "Under Review"
+    REJECTED = "Rejected"
+
 class BusinessStatus(str, Enum):
     OPEN = "Open"
     CLOSED = "Closed"
+
+class WalletUserStatus(str, Enum):
+    PENDING = "Pending"
+    VERIFIED = "Verified"
+    FREEZE = "Freeze"

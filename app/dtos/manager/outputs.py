@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from app.data.enums import ManagerRole, WalletUserType
+from app.data.enums import BusinessApprovalStatus, BusinessType, ManagerRole, WalletUserStatus, WalletUserType
 from app.dtos.base import BaseDto
+from app.dtos.shared.outputs import OwnerInfo
 
 
 class ManagerAuthResult(BaseDto):
@@ -16,6 +17,7 @@ class AccountListItem(BaseDto):
     nick_name:Optional[str] = None
     profile_url:Optional[str] = None
     account_type:WalletUserType
+    account_status:WalletUserStatus
     phone_no:str
     created_at:datetime
     approved_at:datetime
@@ -48,4 +50,13 @@ class SupportChatListItem(BaseDto):
     last_message_id:int
     last_message:str
     is_last_message_read:bool
-    
+
+class BusinessRequestListItem(BaseDto):
+    request_id:int
+    qualified_name:str
+    description:str
+    business_type:BusinessType
+    status:BusinessApprovalStatus
+    banner_url:Optional[str] = None
+    requested_at:datetime
+    owner:OwnerInfo

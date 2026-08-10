@@ -5,13 +5,15 @@ from sqlmodel import Field, Relationship
 
 from app.data.base import AuditableModel
 from app.data.enums import (
+    BusinessApprovalStatus,
     BusinessStatus, 
     BusinessType, 
     ManagerRole, 
     TransactionStatus, 
     TransactionType, 
     UserType, 
-    WalletType, 
+    WalletType,
+    WalletUserStatus, 
     WalletUserType)
 from app.data.meta_models import Township
 
@@ -63,11 +65,13 @@ class WalletUserAccount(AuditableModel, table=True):
     hashed_password:Optional[str] = Field(nullable=True)
     account_type:WalletUserType = Field(nullable=False, default=WalletUserType.NORMAL)
 
+    account_status:WalletUserStatus = Field(nullable=False, default=WalletUserStatus.PENDING)
+
     user:Optional[User] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[WalletUserAccount.user_id]"
     })
 
-    approved_by:int = Field(foreign_key="user.user_id")
+    approved_by:Optional[int] = Field(nullable=True, foreign_key="user.user_id")
     approver:Optional[User] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[WalletUserAccount.approved_by]"
     })
@@ -100,7 +104,7 @@ class Wallet(AuditableModel, table=True):
         "foreign_keys": "[Wallet.wallet_user_id]"
     })
 
-    approved_by:int = Field(foreign_key="manageraccount.user_id")
+    approved_by:Optional[int] = Field(nullabel=True, foreign_key="manageraccount.user_id")
     approver:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[Wallet.approved_by]"
     })
@@ -143,18 +147,27 @@ class TransactionLog(AuditableModel, table=True):
 
 class BusinessApprovalRequest(AuditableModel, table=True):
     request_id:Optional[int] = Field(primary_key=True, default=None)
-    qualify_name:str = Field(nullable=False)
+    qualified_name:str = Field(nullable=False)
     description:str = Field(nullable=False)
     banner_url:Optional[str] = Field(nullable=True)
     business_type:BusinessType = Field(nullable=False)
+    status:BusinessApprovalStatus = Field(nullable=False, default=BusinessApprovalStatus.PENDING)
+    remark:Optional[str] = Field(nullable=True)
 
     owner_id:int = Field(foreign_key="walletuseraccount.user_id")
-    owner:Optional[WalletUserAccount] = Relationship()
+    owner:Optional[WalletUserAccount] = Relationship(sa_relationship_kwargs={
+        "foreign_keys": "[BusinessApprovalRequest.owner_id]"
+    })
+
+    updated_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.user_id")
+    updator:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
+        "foreign_keys": "[BusinessApprovalRequest.updated_by]"
+    })
 
     
 class BusinessProfile(AuditableModel, table=True):
     business_id:Optional[int] = Field(primary_key=True, default=None)
-    qualify_name:str = Field(nullable=False, unique=True)
+    qualified_name:str = Field(nullable=False, unique=True)
     description:str = Field(nullable=False)
     banner_url:Optional[str] = Field(nullable=True)
     business_type:BusinessType = Field(nullable=False)
@@ -166,7 +179,7 @@ class BusinessProfile(AuditableModel, table=True):
         "foreign_keys": "[BusinessProfile.owner_id]"
     })
 
-    approved_by:int = Field(foreign_key="manageraccount.user_id")
+    approved_by:Optional[int] = Field(nullabel=True, foreign_key="manageraccount.user_id")
     approver:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[BusinessProfile.approved_by]"
     })

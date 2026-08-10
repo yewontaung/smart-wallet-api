@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from app.data.enums import BusinessStatus, BusinessType, TransactionStatus, TransactionType, WalletUserType
+from app.data.enums import BusinessStatus, BusinessType, TransactionStatus, TransactionType, WalletUserStatus, WalletUserType
 from app.dtos.base import BaseDto
 
 
@@ -64,6 +64,7 @@ class AccountDetail(BaseDto):
     nick_name:Optional[str] = None
     profile_url:Optional[str] = None
     account_type:WalletUserType
+    account_status:WalletUserStatus
     phone_no:str
     created_at:datetime
     updated_at:datetime
@@ -81,7 +82,7 @@ class OwnerInfo(BaseDto):
 
 class BusinessProfileListItem(BaseDto):
     business_id:int
-    qualify_name:str
+    qualified_name:str
     banner_url:str
     description:str
     business_type:BusinessType
@@ -113,3 +114,31 @@ class ChatMessageListItem(BaseDto):
     chat_id:int
     user_id:int
     user_name:str
+
+# Metamodels
+class DistrictInfo(BaseDto):
+    district_id:int
+    district_name:str
+    townships:int
+    created_at:datetime
+    updated_at:datetime
+
+class TownshipInfo(BaseDto):
+    township_id:int
+    township_name:str
+    district_id:int
+    district_name:str
+    created_at:datetime
+    updated_at:datetime
+
+class ReceiverProfile(BaseDto):
+    user_id:int
+    wallet_id:int
+    full_name:int
+    phone_no:str
+
+
+class ProviderProfile(BaseDto):
+    business_id:int
+    qualified_name:str
+    wallet_id:int
