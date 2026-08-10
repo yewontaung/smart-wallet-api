@@ -180,6 +180,7 @@ class CustomerSupportChat(AuditableModel, table=True):
 class ChatMessage(AuditableModel, table=True):
     message_id:Optional[int] = Field(primary_key=True, default=None)
     message_content:str = Field(nullable=False)
+    is_read:bool = Field(default=False)
 
     user_id:int = Field(foreign_key="user.user_id")
     user:Optional[User] = Relationship()
