@@ -18,28 +18,8 @@ from app.data.enums import (
 from app.data.meta_models import Township
 
 
-class NRC(AuditableModel, table=True):
-    nrc_id:Optional[int] = Field(primary_key=True, default=None)
-    district_code:str = Field(nullable=False)
-    township_code:str = Field(nullable=False)
-    nrc_type:str = Field(nullable=False)
-    nrc_no:str = Field(nullable=False)
-
-    user_id:int = Field(foreign_key="user.user_id")
-    user:Optional["User"] = Relationship(back_populates="nrc")
-
-class Address(AuditableModel, table=True):
-    address_id:Optional[int] = Field(primary_key=True, default=None)
-    address_content:str = Field(nullable=False)
-
-    township_id:int = Field(foreign_key="township.township_id")
-    township:Optional[Township] = Relationship()
-
-    user_id:int = Field(foreign_key="user.user_id")
-    user:Optional["User"] = Relationship(back_populates="address")
-
-class User(AuditableModel, table=True):
-    user_id:Optional[int] = Field(primary_key=True, default=None)
+class Account(AuditableModel, table=True):
+    account_id:Optional[int] = Field(primary_key=True, default=None)
     full_name:str = Field(nullable=False)    
 
     user_type:UserType = Field(nullable=False)
@@ -48,15 +28,31 @@ class User(AuditableModel, table=True):
     is_disable:bool = Field(default=False)
     is_deleted:bool = Field(default=False)
 
-    nrc_id:int = Field(foreign_key="nrc.nrc_id")
-    nrc:Optional[NRC] = Relationship(back_populates="user")
+    nrc:Optional["NRC"] = Relationship(back_populates="account")
+    address:Optional["Address"] = Relationship(back_populates="account")
 
-    address_id:int = Field(foreign_key="address.address_id")
-    address:Optional[Address] = Relationship(back_populates="user")
+class NRC(AuditableModel, table=True):
+    nrc_id:Optional[int] = Field(primary_key=True, default=None)
+    district_code:str = Field(nullable=False)
+    township_code:str = Field(nullable=False)
+    nrc_type:str = Field(nullable=False)
+    nrc_no:str = Field(nullable=False)
 
+    account_id:int = Field(foreign_key="account.account_id")
+    account:Optional["Account"] = Relationship(back_populates="nrc")
+
+class Address(AuditableModel, table=True):
+    address_id:Optional[int] = Field(primary_key=True, default=None)
+    address_content:str = Field(nullable=False)
+
+    township_id:int = Field(foreign_key="township.township_id")
+    township:Optional[Township] = Relationship()
+
+    account_id:int = Field(foreign_key="account.account_id")
+    account:Optional["Account"] = Relationship(back_populates="address")
 
 class WalletUserAccount(AuditableModel, table=True):
-    user_id:int = Field(primary_key=True, foreign_key="user.user_id", nullable=False)
+    account_id:int = Field(primary_key=True, foreign_key="account.account_id", nullable=False)
     phone_no:str = Field(nullable=False, unique=True, index=True)
     pin:str = Field(nullable=False)
 
@@ -67,12 +63,12 @@ class WalletUserAccount(AuditableModel, table=True):
 
     account_status:WalletUserStatus = Field(nullable=False, default=WalletUserStatus.PENDING)
 
-    user:Optional[User] = Relationship(sa_relationship_kwargs={
-        "foreign_keys": "[WalletUserAccount.user_id]"
+    account:Optional[Account] = Relationship(sa_relationship_kwargs={
+        "foreign_keys": "[WalletUserAccount.account_id]"
     })
 
-    approved_by:Optional[int] = Field(nullable=True, foreign_key="user.user_id")
-    approver:Optional[User] = Relationship(sa_relationship_kwargs={
+    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.account_id")
+    approver:Optional[Account] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[WalletUserAccount.approved_by]"
     })
 
@@ -81,14 +77,14 @@ class WalletUserAccount(AuditableModel, table=True):
 
 
 class ManagerAccount(AuditableModel, table=True):
-    user_id:int = Field(primary_key=True, foreign_key="user.user_id", nullable=False)
+    account_id:int = Field(primary_key=True, foreign_key="account.account_id", nullable=False)
     phone_no:str = Field(nullable=False, unique=True, index=True)
     account_email:str = Field(nullable=False, unique=True, index=True)
     hashed_password:str = Field(nullable=False)
     role:ManagerRole = Field(nullable=False)
 
-    user:Optional[User] = Relationship(sa_relationship_kwargs={
-        "foreign_keys": "[User.user_id]"
+    account:Optional[Account] = Relationship(sa_relationship_kwargs={
+        "foreign_keys": "[ManagerAccount.account_id]"
     })
 
 
@@ -99,12 +95,12 @@ class Wallet(AuditableModel, table=True):
     last_balance:float = Field(nullable=False, ge=0)
     version:int = Field(nullable=False, ge=0, default=0)
 
-    wallet_user_id:int = Field(foreign_key="walletuseraccount.user_id")
+    wallet_account_id:int = Field(foreign_key="walletuseraccount.account_id")
     wallet_user:Optional[WalletUserAccount] = Relationship(back_populates="wallets", sa_relationship_kwargs={
-        "foreign_keys": "[Wallet.wallet_user_id]"
+        "foreign_keys": "[Wallet.wallet_account_id]"
     })
 
-    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.user_id")
+    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.account_id")
     approver:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[Wallet.approved_by]"
     })
@@ -154,12 +150,12 @@ class BusinessApprovalRequest(AuditableModel, table=True):
     status:BusinessApprovalStatus = Field(nullable=False, default=BusinessApprovalStatus.PENDING)
     remark:Optional[str] = Field(nullable=True)
 
-    owner_id:int = Field(foreign_key="walletuseraccount.user_id")
+    owner_id:int = Field(foreign_key="walletuseraccount.account_id")
     owner:Optional[WalletUserAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[BusinessApprovalRequest.owner_id]"
     })
 
-    updated_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.user_id")
+    updated_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.account_id")
     updator:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[BusinessApprovalRequest.updated_by]"
     })
@@ -174,18 +170,18 @@ class BusinessProfile(AuditableModel, table=True):
     is_deleted:bool = Field(nullable=False, default=False)
     status:BusinessStatus = Field(nullable=False, default=BusinessStatus.OPEN)
 
-    owner_id:int = Field(foreign_key="walletuseraccount.user_id")
+    owner_id:int = Field(foreign_key="walletuseraccount.account_id")
     owner:Optional[WalletUserAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[BusinessProfile.owner_id]"
     })
 
-    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.user_id")
+    approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.account_id")
     approver:Optional[ManagerAccount] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[BusinessProfile.approved_by]"
     })
 
 class CustomerSupportChat(AuditableModel, table=True):
-    chat_id:int = Field(primary_key=True, foreign_key="walletuseraccount.user_id", ondelete="CASCADE")
+    chat_id:int = Field(primary_key=True, foreign_key="walletuseraccount.account_id", ondelete="CASCADE")
     wallet_user:Optional[WalletUserAccount] = Relationship(back_populates="support_chat")
 
     messages:list["ChatMessage"] = Relationship(back_populates="support_chat")
@@ -195,8 +191,8 @@ class ChatMessage(AuditableModel, table=True):
     message_content:str = Field(nullable=False)
     is_read:bool = Field(default=False)
 
-    user_id:int = Field(foreign_key="user.user_id")
-    user:Optional[User] = Relationship()
+    account_id:int = Field(foreign_key="account.account_id")
+    account:Optional[Account] = Relationship()
 
     support_chat_id:int = Field(foreign_key="customersupportchat.chat_id", ondelete="CASCADE")
     support_chat:Optional[CustomerSupportChat] = Relationship(back_populates="messages")
