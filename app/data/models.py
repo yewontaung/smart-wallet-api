@@ -68,7 +68,7 @@ class WalletUserAccount(AuditableModel, table=True):
     })
 
     approved_by:Optional[int] = Field(nullable=True, foreign_key="manageraccount.account_id")
-    approver:Optional[Account] = Relationship(sa_relationship_kwargs={
+    approver:Optional["ManagerAccount"] = Relationship(sa_relationship_kwargs={
         "foreign_keys": "[WalletUserAccount.approved_by]"
     })
 
@@ -112,7 +112,7 @@ class WalletOperation(AuditableModel, table=True):
     transactions:list["Transaction"] = Relationship(back_populates="operation")
 
 class Transaction(AuditableModel, table=True):
-    trx_id:Optional[UUID] = Field(primary_key=True, default=uuid4)
+    trx_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
     amount:float = Field(nullable=False, gt=0)
     status:TransactionStatus = Field(nullable=False)
     note:Optional[str] = Field(nullable=True)
@@ -132,7 +132,7 @@ class Transaction(AuditableModel, table=True):
 
 
 class TransactionLog(AuditableModel, table=True):
-    log_id:Optional[UUID] = Field(primary_key=True, default=uuid4)
+    log_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
     trx_type:TransactionType = Field(nullable=False)
 
     wallet_id:int = Field(foreign_key="wallet.wallet_id")
