@@ -12,23 +12,23 @@ class ManagerAuthResult(BaseDto):
     access_type:str = "Bearer"
 
 class AccountListItem(BaseDto):
-    user_id:int
-    full_name:int
-    nick_name:Optional[str] = None
-    profile_url:Optional[str] = None
-    account_type:WalletUserType
-    account_status:WalletUserStatus
-    phone_no:str
-    created_at:datetime
-    approved_at:datetime
-    approver_id:int
-    approver_full_name:str
-    current_balance:float
-    last_balance:float
+    user_id: int
+    full_name: str
+    nick_name: Optional[str] = None
+    profile_url: Optional[str] = None
+    account_type: WalletUserType
+    account_status: WalletUserStatus
+    phone_no: str
+    created_at: datetime
+    approved_at: Optional[datetime] = None
+    approver_id: Optional[int] = None
+    approver_full_name: Optional[str] = None
+    current_balance: float
+    last_balance: float
 
 class ManagerListItem(BaseDto):
     user_id:int
-    full_name:int
+    full_name:str
     nick_name:Optional[str] = None
     profile_url:Optional[str] = None
     role:ManagerRole
@@ -40,7 +40,7 @@ class SupportChatListItem(BaseDto):
     chat_id:int
     created_at:int
     user_id:int
-    full_name:int
+    full_name:str
     phone_no:int
     district_id:int
     district:str
