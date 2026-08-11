@@ -130,6 +130,8 @@ class Transaction(AuditableModel, table=True):
         "foreign_keys": "[Transaction.sender_wallet_id]"
     })
 
+    trx_logs:list["TransactionLog"] = Relationship(back_populates="transaction")
+
 
 class TransactionLog(AuditableModel, table=True):
     log_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
@@ -139,7 +141,7 @@ class TransactionLog(AuditableModel, table=True):
     wallet:Optional[Wallet] = Relationship()
 
     trx_id:UUID = Field(foreign_key="transaction.trx_id")
-    transaction:Optional[Transaction] = Relationship()
+    transaction:Optional[Transaction] = Relationship(back_populates="trx_logs")
 
 class BusinessApprovalRequest(AuditableModel, table=True):
     request_id:Optional[int] = Field(primary_key=True, default=None)
