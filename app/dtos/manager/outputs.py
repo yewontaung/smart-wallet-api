@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from app.data.enums import BusinessApprovalStatus, BusinessType, ManagerRole, WalletUserStatus, WalletUserType
+from app.data.models import BusinessApprovalRequest
 from app.dtos.base import BaseDto
 from app.dtos.shared.outputs import OwnerInfo
 
@@ -60,3 +61,21 @@ class BusinessRequestListItem(BaseDto):
     banner_url:Optional[str] = None
     requested_at:datetime
     owner:OwnerInfo
+
+    @staticmethod
+    def from_(item:BusinessApprovalRequest) -> "BusinessRequestListItem":
+        account = item.owner.account
+        return BusinessRequestListItem(
+            request_id=item.request_id,
+            qualified_name=item.qualified_name,
+            description=item.description,
+            business_type=item.business_type,
+            status=item.status,
+            banner_url=item.banner_url,
+            requested_at=item.created_at,
+            owner=OwnerInfo(
+                user_id=account.account_id,
+                full_name=account.full_name,
+                profile_url=account.profile_url,
+            )
+        )
