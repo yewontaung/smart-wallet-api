@@ -30,7 +30,7 @@ def require_wallet_user_authentication():
 
 def wallet_user_authentication(request:Request) -> AuthUser:
     return AuthUser(
-        user_id=2,
+        user_id=4,
         user_name="user@gmil.com",
         roles=["user"],
     )

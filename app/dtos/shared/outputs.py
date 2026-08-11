@@ -134,7 +134,7 @@ class TownshipInfo(BaseDto):
 class ReceiverProfile(BaseDto):
     user_id:int
     wallet_id:int
-    full_name:int
+    full_name:str
     phone_no:str
 
 
