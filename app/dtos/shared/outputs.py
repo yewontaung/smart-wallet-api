@@ -83,7 +83,7 @@ class OwnerInfo(BaseDto):
 class BusinessProfileListItem(BaseDto):
     business_id:int
     qualified_name:str
-    banner_url:str
+    banner_url:Optional[str]
     description:str
     business_type:BusinessType
     created_at:datetime
