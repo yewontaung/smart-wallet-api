@@ -23,7 +23,7 @@ def search(
 def reject(request_id:int, form:BusinessRequestRejectForm, auth:ManagerAuthentication, session:Session = Depends(get_session)):
     return business_request_service.reject(form, request_id, auth.user_id, session)
 
-@router.post("/{request_id}")
+@router.post("/{request_id}/approve")
 def approve(request_id:int, auth:ManagerAuthentication, session:Session = Depends(get_session)):
     return business_request_service.approve(request_id, auth.user_id, session)
 
