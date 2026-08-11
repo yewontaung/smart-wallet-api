@@ -1,3 +1,4 @@
+from sqlalchemy.orm import aliased
 from sqlmodel import Session, func, select
 
 from app.data.models import (
@@ -22,58 +23,105 @@ def search_by_account_id(
 ) -> PageResult[TransactionLogListItem]:
 
     # =========================================================
-    # Base query
+    # 1. Create aliases for sender and receiver
+    # =========================================================
+
+    SenderWallet = aliased(Wallet)
+    ReceiverWallet = aliased(Wallet)
+
+    SenderUser = aliased(WalletUserAccount)
+    ReceiverUser = aliased(WalletUserAccount)
+
+    SenderAccount = aliased(Account)
+    ReceiverAccount = aliased(Account)
+
+    # =========================================================
+    # 2. Base query
+    #
+    # TransactionLog.wallet_id is the wallet whose history
+    # we are viewing.
+    #
+    # We separately load sender_wallet and receiver_wallet
+    # so that we can return the OTHER wallet in wallet_info.
     # =========================================================
 
     statement = (
         select(
             TransactionLog,
             Transaction,
-            Wallet,
-            WalletUserAccount,
-            Account,
             WalletOperation,
+            SenderWallet,
+            ReceiverWallet,
+            SenderUser,
+            ReceiverUser,
+            SenderAccount,
+            ReceiverAccount,
         )
         .join(
             Transaction,
             TransactionLog.trx_id == Transaction.trx_id,
         )
         .join(
-            Wallet,
-            TransactionLog.wallet_id == Wallet.wallet_id,
-        )
-        .join(
-            WalletUserAccount,
-            Wallet.wallet_account_id == WalletUserAccount.account_id,
-        )
-        .join(
-            Account,
-            WalletUserAccount.account_id == Account.account_id,
-        )
-        .join(
             WalletOperation,
             Transaction.operation_id == WalletOperation.operation_id,
         )
+        .join(
+            SenderWallet,
+            Transaction.sender_wallet_id == SenderWallet.wallet_id,
+        )
+        .join(
+            ReceiverWallet,
+            Transaction.receiver_wallet_id == ReceiverWallet.wallet_id,
+        )
+        .join(
+            SenderUser,
+            SenderWallet.wallet_account_id == SenderUser.account_id,
+        )
+        .join(
+            ReceiverUser,
+            ReceiverWallet.wallet_account_id == ReceiverUser.account_id,
+        )
+        .join(
+            SenderAccount,
+            SenderUser.account_id == SenderAccount.account_id,
+        )
+        .join(
+            ReceiverAccount,
+            ReceiverUser.account_id == ReceiverAccount.account_id,
+        )
         .where(
-            Wallet.wallet_account_id == account_id,
+            TransactionLog.wallet_id.in_(
+                select(Wallet.wallet_id).where(
+                    Wallet.wallet_account_id == account_id
+                )
+            )
         )
     )
 
     # =========================================================
-    # q - full name, phone number, or transaction note
+    # 3. q search
+    #
+    # Search:
+    # - sender full name
+    # - receiver full name
+    # - sender phone number
+    # - receiver phone number
+    # - transaction note
     # =========================================================
 
     if search.q:
         search_pattern = f"%{search.q}%"
 
         statement = statement.where(
-            (Account.full_name.ilike(search_pattern))
-            | (WalletUserAccount.phone_no.ilike(search_pattern))
+            (SenderAccount.full_name.ilike(search_pattern))
+            | (ReceiverAccount.full_name.ilike(search_pattern))
+            | (SenderUser.phone_no.ilike(search_pattern))
+            | (ReceiverUser.phone_no.ilike(search_pattern))
             | (Transaction.note.ilike(search_pattern))
         )
 
     # =========================================================
-    # Operation filter
+    # 4. Operation filter
     # =========================================================
 
     if search.operation_id is not None:
@@ -82,7 +130,7 @@ def search_by_account_id(
         )
 
     # =========================================================
-    # Amount filters
+    # 5. Amount filters
     # =========================================================
 
     if search.amount_from is not None:
@@ -96,7 +144,7 @@ def search_by_account_id(
         )
 
     # =========================================================
-    # Date filters
+    # 6. Date filters
     # =========================================================
 
     if search.date_from is not None:
@@ -110,7 +158,7 @@ def search_by_account_id(
         )
 
     # =========================================================
-    # Count total matching records
+    # 7. Count total matching records
     # =========================================================
 
     count_statement = select(func.count()).select_from(
@@ -120,7 +168,7 @@ def search_by_account_id(
     total = session.exec(count_statement).one()
 
     # =========================================================
-    # Pagination
+    # 8. Pagination
     # =========================================================
 
     offset = (page - 1) * size
@@ -135,7 +183,7 @@ def search_by_account_id(
     results = session.exec(statement).all()
 
     # =========================================================
-    # Build response items
+    # 9. Build response
     # =========================================================
 
     items = []
@@ -143,19 +191,54 @@ def search_by_account_id(
     for (
         transaction_log,
         transaction,
-        wallet,
-        wallet_user,
-        account,
         operation,
+        sender_wallet,
+        receiver_wallet,
+        sender_user,
+        receiver_user,
+        sender_account,
+        receiver_account,
     ) in results:
 
+        # =====================================================
+        # IMPORTANT:
+        #
+        # wallet_info MUST contain the OTHER wallet.
+        #
+        # Current user is sender
+        #     -> show receiver
+        #
+        # Current user is receiver
+        #     -> show sender
+        # =====================================================
+
+        if transaction_log.wallet_id == transaction.sender_wallet_id:
+
+            other_wallet = receiver_wallet
+            other_user = receiver_user
+            other_account = receiver_account
+
+        else:
+
+            other_wallet = sender_wallet
+            other_user = sender_user
+            other_account = sender_account
+
+        # =====================================================
+        # Build other user's wallet information
+        # =====================================================
+
         wallet_info = WalletInfo(
-            wallet_id=wallet.wallet_id,
-            user_id=account.account_id,
-            phone_no=wallet_user.phone_no,
-            full_name=account.full_name,
-            account_type=wallet_user.account_type,
+            wallet_id=other_wallet.wallet_id,
+            user_id=other_account.account_id,
+            phone_no=other_user.phone_no,
+            full_name=other_account.full_name,
+            account_type=other_user.account_type,
         )
+
+        # =====================================================
+        # Build transaction log item
+        # =====================================================
 
         items.append(
             TransactionLogListItem(
@@ -166,14 +249,14 @@ def search_by_account_id(
                 status=transaction.status,
                 note=transaction.note,
                 operation=operation.operation_name,
-                user_id=account.account_id,
+                user_id=account_id,
                 wallet_info=wallet_info,
                 created_at=transaction_log.created_at,
             )
         )
 
     # =========================================================
-    # Return paginated result
+    # 10. Return paginated result
     # =========================================================
 
     return PageResult[TransactionLogListItem](
