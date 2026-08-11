@@ -76,7 +76,7 @@ class AccountDetail(BaseDto):
 
 class OwnerInfo(BaseDto):
     user_id:int
-    full_name:int
+    full_name:str
     profile_url:Optional[str] = None
 
 
