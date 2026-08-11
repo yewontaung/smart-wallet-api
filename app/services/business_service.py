@@ -1,7 +1,10 @@
 from sqlmodel import Session, select, func
 
+from app.data.database import safe_call
+from app.data.enums import BusinessApprovalStatus
 from app.data.models import (
     Account,
+    BusinessApprovalRequest,
     BusinessProfile,
     ManagerAccount,
     Wallet,
@@ -224,8 +227,22 @@ def apply_request(
     session: Session,
 ) -> ModificationResult:
 
+    wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "account_id", user_id)
+    business_request = BusinessApprovalRequest(
+        qualified_name=form.qualified_name,
+        banner_url=form.banner_url,
+        business_type=form.business_type,
+        description=form.description,
+        owner_id=wallet_user.account_id,
+        status=BusinessApprovalStatus.PENDING,
+    )
+
+    session.add(business_request)
+    session.commit()
+    session.refresh(business_request)
+
     return ModificationResult(
-        result_item=None,
-        is_success=False,
-        message="Business application is not implemented yet.",
+        result_item=business_request.request_id,
+        is_success=True,
+        message="Business profile is requested successfully.",
     )
