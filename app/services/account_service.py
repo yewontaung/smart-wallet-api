@@ -437,8 +437,34 @@ def approve_wallet_user(
 # Search Receiver
 # =========================================================
 
-def search_receiver(
-    search: ReceiverSearch,
-    session: Session,
-) -> ReceiverProfile:
-    return 
+def search_receiver(search:ReceiverSearch, session:Session) -> ReceiverProfile:
+    wallet_user = safe_call(
+        session.exec(
+            select(WalletUserAccount).options(
+                selectinload(WalletUserAccount.account)
+            ).where(
+                WalletUserAccount.phone_no == search.phone_no
+            )
+        ).first(), 
+        "WalletUserAccount", 
+        "phone", 
+        search.phone_no)
+    
+    wallet = safe_call(
+        session.exec(
+            select(Wallet).where(
+                Wallet.wallet_account_id == wallet_user.account_id, 
+                Wallet.wallet_type == WalletType.FUNDING
+            )
+        ).first(),
+        "Wallet",
+        "account_id",
+        wallet_user.account_id
+    )
+
+    return ReceiverProfile(
+        user_id=wallet_user.account_id,
+        wallet_id=wallet.wallet_id,
+        full_name=wallet_user.account.full_name,   
+        phone_no=wallet_user.phone_no,
+    )
