@@ -11,6 +11,7 @@ from app.data.models import (
     WalletUserAccount,
 )
 from app.dtos.base import ModificationResult, PageResult
+from app.dtos.manager.outputs import BusinessProfileDetail
 from app.dtos.shared.outputs import (
     ApproverInfo,
     BusinessProfileListItem,
@@ -245,4 +246,27 @@ def apply_request(
         result_item=business_request.request_id,
         is_success=True,
         message="Business profile is requested successfully.",
+    )
+
+def find_by_id(business_id:int, session:Session) -> BusinessProfileDetail:
+    business = safe_call(session.get(BusinessProfile, business_id), "BusinessProfile", "business_id", business_id)
+    owner = business.owner
+    approver = business.approver
+    return BusinessProfileDetail(
+        business_id=business.business_id,
+        qualified_name=business.qualified_name,
+        banner_url=business.banner_url,
+        description=business.description,
+        created_at=business.created_at,
+        status=business.status,
+        owner=OwnerInfo(
+            user_id=owner.account_id,
+            full_name=owner.account.full_name,
+            profile_url=owner.account.profile_url,
+        ),
+        approver=ApproverInfo(
+            approver_id=approver.account_id,
+            approved_at=business.updated_at,
+            approver_full_name=approver.account.full_name
+        )
     )

@@ -4,7 +4,7 @@ from typing import Optional
 from app.data.enums import BusinessApprovalStatus, BusinessType, ManagerRole, WalletUserStatus, WalletUserType
 from app.data.models import BusinessApprovalRequest
 from app.dtos.base import BaseDto
-from app.dtos.shared.outputs import OwnerInfo
+from app.dtos.shared.outputs import ApproverInfo, OwnerInfo
 
 
 class ManagerAuthResult(BaseDto):
@@ -79,3 +79,13 @@ class BusinessRequestListItem(BaseDto):
                 profile_url=account.profile_url,
             )
         )
+
+class BusinessProfileDetail(BaseDto):
+    business_id:int
+    qualified_name:str
+    banner_url:Optional[str]
+    description:str
+    created_at:datetime
+    status:BusinessApprovalStatus
+    owner:OwnerInfo
+    approver:ApproverInfo
