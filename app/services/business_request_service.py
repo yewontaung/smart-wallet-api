@@ -106,7 +106,28 @@ def approve(request_id:int, manager_id:int, session:Session) -> ModificationResu
     )
 
 def reject(form:BusinessRequestRejectForm, request_id:int, manager_id:int, session:Session) -> ModificationResult:
-    return
+    business_request = safe_call(session.get(BusinessApprovalRequest, request_id), "BusinessApprovalRequest", "request_id", request_id)
+    if business_request.status == BusinessApprovalStatus.REJECTED:
+        raise BusinessException("Request is already rejected.")
+    business_request.status = BusinessApprovalStatus.REJECTED
+    business_request.remark = form.remark
+    business_request.updated_by = manager_id
+    session.commit()
+    return ModificationResult(
+        result_item=business_request.request_id,
+        is_success=True,
+        message=f"Business Request : {request_id} is rejected."
+    )
 
 def change_status(form:BusinessRequestStatusChangeForm, request_id:int, manager_id:int, session:Session) -> ModificationResult:
-    return
+    business_request = safe_call(session.get(BusinessApprovalRequest, request_id), "BusinessApprovalRequest", "request_id", request_id)
+    if business_request.status == form.status:
+        raise BusinessException("New status cannot be old status.")
+    business_request.status = form.status
+    business_request.updated_by = manager_id
+    session.commit()
+    return ModificationResult(
+        result_item=business_request.request_id,
+        is_success=True,
+        message=f"Business Request : {request_id} is changed to {form.status}."
+    )
