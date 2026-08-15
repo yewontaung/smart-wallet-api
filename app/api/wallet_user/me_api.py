@@ -4,7 +4,7 @@ from sqlmodel import Session
 from app.data.database import get_session
 from app.deps.auth import WalletUserAuthentication
 from app.dtos.shared.searches import BusinessProfileSearch, TransactionSearch
-from app.services import account_service, transaction_log_service, business_service
+from app.services import account_service, business_request_service, transaction_log_service, business_service
 
 router = APIRouter(prefix="/me")
 
@@ -34,3 +34,13 @@ def businesses(
     session:Session = Depends(get_session),
 ):
     return business_service.search_by_owner_id(search, auth_user.user_id, page, size, session)
+
+@router.get("/business-requests")
+def business_requests(
+    auth_user:WalletUserAuthentication,
+    search:BusinessProfileSearch = Depends(),
+    page:int = Query(ge=1, default=1),
+    size:int = Query(ge=10, default=10),
+    session:Session = Depends(get_session),
+):
+    return business_request_service.search_by_owner_id(search, auth_user.user_id, page, size, session)

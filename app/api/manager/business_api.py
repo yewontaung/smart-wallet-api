@@ -16,3 +16,9 @@ def search(
     session:Session = Depends(get_session)
 ):
     return business_service.search(search, page, size, session)
+
+def detail(
+    business_id:int,
+    session:Session = Depends(get_session)
+):
+    return business_service.find_by_id(business_id, session)

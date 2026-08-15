@@ -1,13 +1,17 @@
 from sqlmodel import Session, select, func
 
+from app.data.database import safe_call
+from app.data.enums import BusinessApprovalStatus
 from app.data.models import (
     Account,
+    BusinessApprovalRequest,
     BusinessProfile,
     ManagerAccount,
     Wallet,
     WalletUserAccount,
 )
 from app.dtos.base import ModificationResult, PageResult
+from app.dtos.manager.outputs import BusinessProfileDetail
 from app.dtos.shared.outputs import (
     ApproverInfo,
     BusinessProfileListItem,
@@ -224,8 +228,45 @@ def apply_request(
     session: Session,
 ) -> ModificationResult:
 
+    wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "account_id", user_id)
+    business_request = BusinessApprovalRequest(
+        qualified_name=form.qualified_name,
+        banner_url=form.banner_url,
+        business_type=form.business_type,
+        description=form.description,
+        owner_id=wallet_user.account_id,
+        status=BusinessApprovalStatus.PENDING,
+    )
+
+    session.add(business_request)
+    session.commit()
+    session.refresh(business_request)
+
     return ModificationResult(
-        result_item=None,
-        is_success=False,
-        message="Business application is not implemented yet.",
+        result_item=business_request.request_id,
+        is_success=True,
+        message="Business profile is requested successfully.",
+    )
+
+def find_by_id(business_id:int, session:Session) -> BusinessProfileDetail:
+    business = safe_call(session.get(BusinessProfile, business_id), "BusinessProfile", "business_id", business_id)
+    owner = business.owner
+    approver = business.approver
+    return BusinessProfileDetail(
+        business_id=business.business_id,
+        qualified_name=business.qualified_name,
+        banner_url=business.banner_url,
+        description=business.description,
+        created_at=business.created_at,
+        status=business.status,
+        owner=OwnerInfo(
+            user_id=owner.account_id,
+            full_name=owner.account.full_name,
+            profile_url=owner.account.profile_url,
+        ),
+        approver=ApproverInfo(
+            approver_id=approver.account_id,
+            approved_at=business.updated_at,
+            approver_full_name=approver.account.full_name
+        )
     )
