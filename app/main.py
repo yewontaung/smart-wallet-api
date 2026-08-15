@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import configs
 from app.configs import routes
@@ -30,6 +31,18 @@ async def lifespan(app:FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+origins = env.ALLOW_ORIGINS.split(",")
+
+"""
+CORS configs
+"""
+app.add_middleware(
+    CORSMiddleware,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+    allow_origins=origins,
+)
 
 """
 Endpoints registration

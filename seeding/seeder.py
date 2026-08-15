@@ -316,7 +316,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=alice.account_id,
                 phone_no="09411111111",
-                pin="1234",
+                pin="123456",
                 nick_name="Alice",
                 account_type=WalletUserType.SPECIAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -325,7 +325,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=bob.account_id,
                 phone_no="09422222222",
-                pin="1234",
+                pin="123456",
                 nick_name="Bob",
                 account_type=WalletUserType.NORMAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -334,7 +334,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=charlie.account_id,
                 phone_no="09433333333",
-                pin="1234",
+                pin="123456",
                 nick_name="Charlie",
                 account_type=WalletUserType.NORMAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -343,7 +343,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=david.account_id,
                 phone_no="09444444444",
-                pin="1234",
+                pin="123456",
                 nick_name="David",
                 account_type=WalletUserType.SPECIAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -352,7 +352,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=emma.account_id,
                 phone_no="09455555555",
-                pin="1234",
+                pin="123456",
                 nick_name="Emma",
                 account_type=WalletUserType.NORMAL,
                 account_status=WalletUserStatus.PENDING,
@@ -669,7 +669,7 @@ def seed_database():
         print("  09444444444 - David")
         print("  09455555555 - Emma")
         print()
-        print("Demo PIN: 1234")
+        print("Demo PIN: 123456")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ class SendMoneyForm(BaseDto):
     sender_wallet_id:int
     receiver_wallet_id:int
     note:Optional[str] = None
+    pin:str = Field(max_length=6, min_length=6)
 
     def sorted_wallet(self) -> list[int]:
         return sorted([self.sender_wallet_id, self.receiver_wallet_id])
@@ -19,6 +20,7 @@ class PayBillForm(BaseDto):
     sender_wallet_id:int
     receiver_wallet_id:int
     business_id:int
+    pin:str = Field(max_length=6, min_length=6)
 
     def sorted_wallet(self) -> list[int]:
         return sorted([self.sender_wallet_id, self.receiver_wallet_id])
@@ -27,6 +29,7 @@ class PayBillForm(BaseDto):
 class MobileTopUpForm(BaseDto):
     amount:float = Field(ge=1000)
     phone_no:str = Field(min_length=5)
+    pin:str = Field(max_length=6, min_length=6)
     sender_wallet_id:int
     receiver_wallet_id:int
     business_id:int

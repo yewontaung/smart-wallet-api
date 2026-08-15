@@ -11,13 +11,14 @@ from app.data.models import (
 )
 from app.data.meta_models import Township
 from app.data.database import safe_call
-from app.data.enums import WalletType
+from app.data.enums import ManagerRole, UserType, WalletType, WalletUserType
 
 from app.dtos.base import ModificationResult, PageResult
 from app.dtos.manager.outputs import AccountListItem
 from app.dtos.manager.searches import AccountSearch
 from app.dtos.shared.outputs import (
     AccountDetail,
+    ProfileInfo,
     ReceiverProfile,
     AddressInfo,
     NRCInfo,
@@ -468,3 +469,25 @@ def search_receiver(search:ReceiverSearch, session:Session) -> ReceiverProfile:
         full_name=wallet_user.account.full_name,   
         phone_no=wallet_user.phone_no,
     )
+
+def profile_by_account_id(account_id:int, session:Session) -> ProfileInfo:
+    account = safe_call(session.get(Account, account_id), "Account", "account_id", account_id)
+    if account.user_type == UserType.WALLET_USER:
+        wallet_account = safe_call(session.get(WalletUserAccount, account_id), "WalletUserAccount", "account_id", account_id)
+        return ProfileInfo(
+            account_id=account.account_id,
+            full_name=account.full_name,
+            phone=wallet_account.phone_no,
+            role="normal-wallet-user" if wallet_account.account_type == WalletUserType.NORMAL else "special-wallet-user"
+        )
+    else:
+        manager_account = safe_call(session.get(ManagerAccount, account_id), "ManagerAccount", "account_id", account_id)
+        return ProfileInfo(
+            account_id=account.account_id,
+            full_name=account.full_name,
+            phone=manager_account.phone_no,
+            role=(
+                "admin-manager" if manager_account.role == ManagerRole.ADMIN 
+                else "normal-manager" if manager_account.role == ManagerRole.MODERATOR 
+                else "supervisor-manager"),
+        )

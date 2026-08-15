@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from app.data.enums import BusinessStatus, BusinessType, TransactionStatus, TransactionType, WalletUserStatus, WalletUserType
@@ -137,8 +137,23 @@ class ReceiverProfile(BaseDto):
     full_name:str
     phone_no:str
 
+UserRole = Literal[
+    "special-wallet-user", 
+    "normal-wallet-user",  
+    "admin-manager",
+    "supervisor-manager", 
+    "normal-manager"
+]
+
+class ProfileInfo(BaseDto):
+    account_id:int
+    phone:str
+    full_name:str
+    role:UserRole
+
 
 class ProviderProfile(BaseDto):
     business_id:int
     qualified_name:str
     wallet_id:int
+

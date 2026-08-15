@@ -15,6 +15,13 @@ def index(
 ):
     return account_service.find_by_account_id(auth_user.user_id, session)
 
+@router.get("/profile")
+def profile(
+    auth_user:WalletUserAuthentication,
+    session:Session = Depends(get_session),
+):
+    return account_service.profile_by_account_id(auth_user.user_id, session)
+
 @router.get("/transaction-logs")
 def transaction_logs(
     auth_user:WalletUserAuthentication,

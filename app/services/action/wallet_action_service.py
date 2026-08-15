@@ -4,7 +4,7 @@ from sqlmodel import Session, col, select
 
 from app.data.database import safe_call
 from app.data.enums import TransactionStatus, TransactionType
-from app.data.models import BusinessProfile, Transaction, TransactionLog, Wallet, WalletOperation
+from app.data.models import BusinessProfile, Transaction, TransactionLog, Wallet, WalletOperation, WalletUserAccount
 from app.dtos.action.inputs import MobileTopUpForm, PayBillForm, SendMoneyForm
 from app.dtos.action.outputs import ActionResult
 from app.utils.exceptions import BusinessException, InsufficientBalanceException, InvalidAmountException, UnauthorizedWalletException
@@ -73,6 +73,10 @@ def send_money(form:SendMoneyForm, user_id:int, session:Session) -> ActionResult
 
     if form.sender_wallet_id == form.receiver_wallet_id:
         raise BusinessException("Invalid wallet.")
+
+    wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "user_id", user_id)
+    if wallet_user.pin != form.pin:
+        raise BusinessException("Wrong pin.")
 
     # locak wallets
     wallets = {
