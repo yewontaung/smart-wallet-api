@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 
 from app.data.database import get_session
-from app.deps.auth import ManagerAuthentication
+from app.deps.auth import Authentication
 from app.dtos.manager.searches import AccountSearch
 from app.dtos.shared.searches import TransactionSearch
 from app.services import account_service, transaction_log_service
@@ -35,7 +35,7 @@ def approve_account(account_id:int, session:Session = Depends(get_session)):
 @router.get("/{account_id}")
 def detail(
     account_id:int,
-    auth_user:ManagerAuthentication,
+    auth_user:Authentication,
     session:Session = Depends(get_session)
 ):
     

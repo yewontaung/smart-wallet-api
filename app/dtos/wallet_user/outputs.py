@@ -13,6 +13,7 @@ class SignInResult(BaseDto):
 class WalletUserAuthResult(BaseDto):
     access_token:str
     access_type:str = "Bearer"
+    remember_token:str
 
     account_id:int
     phone:str

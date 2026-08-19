@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.api.manager import (
     account_api, 
@@ -17,12 +17,13 @@ from app.api.wallet_user import (
     business_api,
     me_api,
     support_chat_api,)
+from app.deps.auth import require_authentication
 
 
 annonymous_router = APIRouter(tags=["annonymous",])
 resource_router = APIRouter(prefix="/resources", tags=["resources"])
 manager_router = APIRouter(prefix="/manager", tags=["manager"])
-wallet_user_router = APIRouter(prefix="/wallet-user", tags=["wallet-user"])
+wallet_user_router = APIRouter(prefix="/wallet-user", tags=["wallet-user"], dependencies=[Depends(require_authentication)])
 
 # annonymous routes registration
 annonymous_router.include_router(prefix="/manager", router=manager_auth_api.router)

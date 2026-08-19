@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 
 from app.data.database import get_session
-from app.deps.auth import ManagerAuthentication
+from app.deps.auth import Authentication
 from app.dtos.manager.inputs import BusinessRequestRejectForm
 from app.dtos.shared.searches import BusinessProfileSearch
 from app.services import business_request_service
@@ -20,10 +20,10 @@ def search(
     return business_request_service.search(search, page, size, session)
 
 @router.put("/{request_id}/reject")
-def reject(request_id:int, form:BusinessRequestRejectForm, auth:ManagerAuthentication, session:Session = Depends(get_session)):
+def reject(request_id:int, form:BusinessRequestRejectForm, auth:Authentication, session:Session = Depends(get_session)):
     return business_request_service.reject(form, request_id, auth.user_id, session)
 
 @router.post("/{request_id}/approve")
-def approve(request_id:int, auth:ManagerAuthentication, session:Session = Depends(get_session)):
+def approve(request_id:int, auth:Authentication, session:Session = Depends(get_session)):
     return business_request_service.approve(request_id, auth.user_id, session)
 

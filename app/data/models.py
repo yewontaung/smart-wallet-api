@@ -54,7 +54,7 @@ class Address(AuditableModel, table=True):
 class WalletUserAccount(AuditableModel, table=True):
     account_id:int = Field(primary_key=True, foreign_key="account.account_id", nullable=False)
     phone_no:str = Field(nullable=False, unique=True, index=True)
-    pin:str = Field(nullable=False)
+    hashed_pin:str = Field(nullable=False)
 
     nick_name:Optional[str] = Field(nullable=True)
 
@@ -75,6 +75,10 @@ class WalletUserAccount(AuditableModel, table=True):
     wallets:list["Wallet"] = Relationship(back_populates="wallet_user")
     support_chat:Optional["CustomerSupportChat"] = Relationship(back_populates="wallet_user")
 
+    @property
+    def user_role(self):
+        return "normal_user" if self.account_type == WalletUserType.NORMAL else "special_user"
+
 
 class ManagerAccount(AuditableModel, table=True):
     account_id:int = Field(primary_key=True, foreign_key="account.account_id", nullable=False)
@@ -87,6 +91,16 @@ class ManagerAccount(AuditableModel, table=True):
         "foreign_keys": "[ManagerAccount.account_id]"
     })
 
+    @property
+    def user_type(self):
+        match self.role:
+            case ManagerRole.ADMIN:
+                value = "admin"
+            case ManagerRole.MODERATOR:
+                value = "moderator"
+            case ManagerRole.SUPER_ADMIN:
+                value = "super_admin"
+        return value
 
 class Wallet(AuditableModel, table=True):
     wallet_id:Optional[int] = Field(primary_key=True, default=None)

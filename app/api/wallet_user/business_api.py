@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 
 from app.data.database import get_session
-from app.deps.auth import WalletUserAuthentication
+from app.deps.auth import Authentication
 from app.dtos.shared.searches import BusinessProfileSearch
 from app.dtos.wallet_user.inputs import BusinessProfileForm
 from app.services import business_service
@@ -21,7 +21,7 @@ def search(
 @router.post("/")
 def apply_request(
     form:BusinessProfileForm,
-    auth_user:WalletUserAuthentication,
+    auth_user:Authentication,
     session:Session = Depends(get_session),
 ):
     return business_service.apply_request(form, auth_user.user_id, session)

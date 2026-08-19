@@ -8,6 +8,7 @@ from app.data.models import BusinessProfile, Transaction, TransactionLog, Wallet
 from app.dtos.action.inputs import MobileTopUpForm, PayBillForm, SendMoneyForm
 from app.dtos.action.outputs import ActionResult
 from app.utils.exceptions import BusinessException, InsufficientBalanceException, InvalidAmountException, UnauthorizedWalletException
+from app.utils.hashing import verify_password
 
 
 def transfer_money(
@@ -75,7 +76,7 @@ def send_money(form:SendMoneyForm, user_id:int, session:Session) -> ActionResult
         raise BusinessException("Invalid wallet.")
 
     wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "user_id", user_id)
-    if wallet_user.pin != form.pin:
+    if verify_password(form.pin, wallet_user.hashed_pin):
         raise BusinessException("Wrong pin.")
 
     # locak wallets
@@ -163,13 +164,16 @@ def pay_bill(form:PayBillForm, user_id:int, session:Session) -> ActionResult:
 
     if receiver_wallet.wallet_account_id != business.owner_id:
         raise BusinessException("Invalid receiver wallet.")
-
+    
     # validation
     if sender_wallet.wallet_account_id != user_id:
         raise UnauthorizedWalletException("Unauthorized wallet user.")
 
     if form.amount <= 0:
         raise InvalidAmountException("Invalid amount to transfer.")
+
+    if verify_password(form.pin, sender_wallet.wallet_user.hashed_pin):
+        raise BusinessException("Wrong pin.")
 
     operation = safe_call(session.exec(select(WalletOperation).where(WalletOperation.operation_name == "Business Payment")).first(), "WalletOperation", "operation_name", "Business Payment")
 

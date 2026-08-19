@@ -20,3 +20,6 @@ class InsufficientBalanceException(BaseException):
 
 class UnauthorizedWalletException(BaseException):
     ...
+
+class SecurityException(BaseException):
+    ...
