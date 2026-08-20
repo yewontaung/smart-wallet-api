@@ -26,6 +26,8 @@ from app.dtos.shared.outputs import (
 )
 from app.dtos.shared.searches import ReceiverSearch
 from app.dtos.wallet_user.inputs import WalletUserForm
+from app.dtos.wallet_user.outputs import WalletBalance
+from app.utils.exceptions import BusinessException
 
 
 # =========================================================
@@ -438,18 +440,21 @@ def approve_wallet_user(
 # Search Receiver
 # =========================================================
 
-def search_receiver(search:ReceiverSearch, session:Session) -> ReceiverProfile:
+def search_receiver(search:ReceiverSearch, account_id:int, session:Session) -> ReceiverProfile:
     wallet_user = safe_call(
         session.exec(
             select(WalletUserAccount).options(
                 selectinload(WalletUserAccount.account)
             ).where(
-                WalletUserAccount.phone_no == search.phone_no
+                WalletUserAccount.phone_no == search.phone_no,
             )
         ).first(), 
         "WalletUserAccount", 
         "phone", 
         search.phone_no)
+
+    if wallet_user.account_id == account_id:
+        raise BusinessException("You cannot send to yourself.")
     
     wallet = safe_call(
         session.exec(
@@ -491,3 +496,22 @@ def profile_by_account_id(account_id:int, session:Session) -> ProfileInfo:
                 else "normal-manager" if manager_account.role == ManagerRole.MODERATOR 
                 else "supervisor-manager"),
         )
+
+def get_balance_by_account_id(account_id:int, session:Session):
+    wallet = safe_call(
+        session.exec(select(Wallet)
+            .options(
+                selectinload(Wallet.wallet_user)
+            )
+            .where(Wallet.wallet_account_id == account_id, Wallet.wallet_type == "Funding")).one_or_none(),
+        "Wallet",
+        "account_id",
+        account_id,
+    )
+
+    return WalletBalance(
+        wallet_id=wallet.wallet_id,
+        account_id=account_id,
+        phone_no=wallet.wallet_user.phone_no,
+        current_balance=wallet.current_balance
+    )

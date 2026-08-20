@@ -12,8 +12,8 @@ from app.services.action import wallet_action_service
 router = APIRouter(prefix="/action")
 
 @router.get("/receiver")
-def search_receiver(search:ReceiverSearch, session:Session = Depends(get_session)):
-    return account_service.search_receiver(search, session)
+def search_receiver(auth_user:Authentication, search:ReceiverSearch = Depends(), session:Session = Depends(get_session)):
+    return account_service.search_receiver(search, auth_user.user_id, session)
 
 @router.get("/providers/{provider_id}")
 def search_provider(provider_id:int, session:Session = Depends(get_session)):

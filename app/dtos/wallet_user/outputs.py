@@ -19,3 +19,9 @@ class WalletUserAuthResult(BaseDto):
     phone:str
     full_name:str
     role:UserRole
+
+class WalletBalance(BaseDto):
+    wallet_id:int
+    account_id:int
+    current_balance:float
+    phone_no:str

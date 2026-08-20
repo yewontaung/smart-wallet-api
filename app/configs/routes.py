@@ -8,7 +8,7 @@ from app.api.manager import (
     manager_api, 
     me_api as manager_me_api,
     support_chat_api as manager_support_chat_api,
-    transaction_api)
+    transaction_api as manager_transaction_api)
 from app.api.resource import district_api, township_api
 from app.api.wallet_user import (
     action_api,
@@ -16,7 +16,8 @@ from app.api.wallet_user import (
     auth_api,
     business_api,
     me_api,
-    support_chat_api,)
+    support_chat_api,
+    transaction_api)
 from app.deps.auth import require_authentication
 
 
@@ -36,7 +37,7 @@ resource_router.include_router(router=district_api.router)
 # Manager routes registration
 manager_router.include_router(router=account_api.router)
 manager_router.include_router(router=manager_me_api.router)
-manager_router.include_router(router=transaction_api.router)
+manager_router.include_router(router=manager_transaction_api.router)
 manager_router.include_router(router=manager_api.router)
 manager_router.include_router(router=manager_business_api.router)
 manager_router.include_router(router=manager_support_chat_api.router)
@@ -48,4 +49,5 @@ wallet_user_router.include_router(router=support_chat_api.router)
 wallet_user_router.include_router(router=action_api.router)
 wallet_user_router.include_router(router=ai_api.router)
 wallet_user_router.include_router(router=business_api.router)
+wallet_user_router.include_router(router=transaction_api.router)
 

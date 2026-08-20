@@ -15,6 +15,10 @@ def index(
 ):
     return account_service.find_by_account_id(auth_user.user_id, session)
 
+@router.get("/balance")
+def balance(auth_user:Authentication, session:Session = Depends(get_session)):
+    return account_service.get_balance_by_account_id(auth_user.user_id, session)
+
 @router.get("/profile")
 def profile(
     auth_user:Authentication,

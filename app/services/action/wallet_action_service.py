@@ -76,7 +76,7 @@ def send_money(form:SendMoneyForm, user_id:int, session:Session) -> ActionResult
         raise BusinessException("Invalid wallet.")
 
     wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "user_id", user_id)
-    if verify_password(form.pin, wallet_user.hashed_pin):
+    if not verify_password(form.pin, wallet_user.hashed_pin):
         raise BusinessException("Wrong pin.")
 
     # locak wallets
