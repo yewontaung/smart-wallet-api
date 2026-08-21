@@ -17,6 +17,7 @@ def search(
 ):
     return business_service.search(search, page, size, session)
 
+@router.get("/{business_id}")
 def detail(
     business_id:int,
     session:Session = Depends(get_session)

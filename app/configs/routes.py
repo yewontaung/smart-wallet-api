@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from app.api.ai_handler import ai_handler_api
 from app.api.manager import (
     account_api, 
     auth_api as manager_auth_api,
@@ -25,6 +26,7 @@ annonymous_router = APIRouter(tags=["annonymous",])
 resource_router = APIRouter(prefix="/resources", tags=["resources"])
 manager_router = APIRouter(prefix="/manager", tags=["manager"])
 wallet_user_router = APIRouter(prefix="/wallet-user", tags=["wallet-user"], dependencies=[Depends(require_authentication)])
+ai_handler_router = APIRouter(prefix="/ai", dependencies=[Depends(require_authentication)])
 
 # annonymous routes registration
 annonymous_router.include_router(prefix="/manager", router=manager_auth_api.router)
@@ -51,3 +53,5 @@ wallet_user_router.include_router(router=ai_api.router)
 wallet_user_router.include_router(router=business_api.router)
 wallet_user_router.include_router(router=transaction_api.router)
 
+# AI
+ai_handler_router.include_router(router=ai_handler_api.router)

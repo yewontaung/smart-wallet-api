@@ -51,6 +51,7 @@ app.include_router(prefix=f"/api/v{env.API_VERSION}", router=routes.annonymous_r
 app.include_router(prefix=f"/api/v{env.API_VERSION}", router=routes.manager_router)
 app.include_router(prefix=f"/api/v{env.API_VERSION}", router=routes.wallet_user_router)
 app.include_router(prefix=f"/api/v{env.API_VERSION}", router=routes.resource_router)
+app.include_router(prefix=f"/api/v{env.API_VERSION}", router=routes.ai_handler_router)
 
 """
 Exception handlers registration

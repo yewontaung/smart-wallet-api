@@ -5,6 +5,7 @@ from sqlmodel import Field, Relationship
 
 from app.data.base import AuditableModel
 from app.data.enums import (
+    AIActionStatus,
     BusinessApprovalStatus,
     BusinessStatus, 
     BusinessType, 
@@ -212,3 +213,23 @@ class ChatMessage(AuditableModel, table=True):
 
     support_chat_id:int = Field(foreign_key="customersupportchat.chat_id", ondelete="CASCADE")
     support_chat:Optional[CustomerSupportChat] = Relationship(back_populates="messages")
+
+class AIMessage(AuditableModel):
+    message_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
+    prompt:str = Field(nullable=False)
+    is_success:bool = Field(default=True)
+
+    account_id:int = Field(foreign_key="account.account_id")
+    account:Optional[Account] = Relationship()
+
+    ai_responses:list["AIResponse"] = Relationship(back_populates="ai_message")
+
+class AIResponse(AuditableModel):
+    response_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
+    intent:str = Field(nullable=False)
+    detail:str = Field(nullable=True)
+    description:str = Field(nullable=True)
+    action_status:AIActionStatus = Field(default=AIActionStatus.PENDING)
+
+    message_id:int = Field(foreign_key="aimessage.message_id")
+    ai_message:AIMessage = Relationship(back_populates="ai_responses")

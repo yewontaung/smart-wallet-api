@@ -31,3 +31,8 @@ class BusinessProfileForm(BaseDto):
     description:str
     banner_url:Optional[str] = Field(default=None)
     business_type:BusinessType
+
+
+class AIMessageForm(BaseDto):
+
+    prompt:str
