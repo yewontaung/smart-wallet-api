@@ -28,7 +28,7 @@ class AgentAction(BaseDto):
     form_display:dict[str, Any] = {}
 
 class AgentResponse(BaseDto):
-    message_id:int
+    message_id:UUID
     prompt:str
     created_at:datetime
     account_id:int

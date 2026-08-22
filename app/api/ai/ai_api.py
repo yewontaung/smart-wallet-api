@@ -7,7 +7,7 @@ from app.dtos.wallet_user.inputs import AIMessageForm
 from app.services.action import ai_service
 
 
-router = APIRouter(prefix="/ai")
+router = APIRouter()
 
 @router.post("/message")
 async def ask(

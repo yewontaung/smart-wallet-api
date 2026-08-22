@@ -6,6 +6,7 @@ from sqlmodel import Session
 from app.data.database import safe_call
 from app.data.enums import AIActionStatus
 from app.data.models import WalletUserAccount
+from app.deps import ws
 from app.dtos.action.outputs import AgentAction, AgentResponse, AgentHook
 from app.dtos.wallet_user.inputs import AIMessageForm
 
@@ -13,9 +14,9 @@ from app.dtos.wallet_user.inputs import AIMessageForm
 async def ask(form:AIMessageForm, account_id:int, session:Session):
     wallet_user = safe_call(session.get(WalletUserAccount, account_id), "WalletUserAccount", "account_id", account_id)
 
-    return AgentResponse(
+    agent_resp = AgentResponse(
         account_id=wallet_user.account_id,
-        message_id=1,
+        message_id=uuid4(),
         created_at=datetime.now(),
         prompt=form.prompt,
         agent_actions=[
@@ -51,3 +52,12 @@ async def ask(form:AIMessageForm, account_id:int, session:Session):
             )
         ]
     )
+    await ws.connection_manager.send_payload_by_id(account_id, {
+        "type": "ai_response",
+        "payload": agent_resp.model_dump(mode="json", by_alias=True)
+    })
+
+    return {
+        "message": "Processing"
+    }
+

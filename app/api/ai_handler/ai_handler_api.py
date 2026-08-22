@@ -12,7 +12,7 @@ router = APIRouter(prefix="/handle")
 
 @router.post("/transfer_money")
 async def handle_transfer_money(auth_user:Authentication, session:Session = Depends(get_session)):
-    return AgentAction(
+    result = AgentAction(
         action_id=uuid4(),
         description="",
         intent="transfer_money",
@@ -34,3 +34,5 @@ async def handle_transfer_money(auth_user:Authentication, session:Session = Depe
             }
         )
     )
+
+    return result
