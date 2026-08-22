@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import configs
+from app.agent import tools
 from app.configs import routes
 from app.data import database
 from app.handlers.exception_handlers import (

@@ -12,3 +12,6 @@ API_VERSION = os.getenv("API_VERSION")
 DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
 DEMO_PIN = os.getenv("DEMO_PIN")
 ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "")
+
+API_KEY = os.getenv("API_KEY")
+API_URL = os.getenv("API_URL")

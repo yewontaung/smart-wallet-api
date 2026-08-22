@@ -13,12 +13,13 @@ class ActionResult(BaseDto):
 
 class AgentHook(BaseDto):
     hook_url:str
-    hook_method:str
+    hook_method:str = "POST"
     form_payload:dict[str, Any] = {}
     require_payload:dict[str, Any] = {}
-    require_pin:bool
+    require_pin:bool = False
 
 class AgentAction(BaseDto):
+    message_id:UUID
     action_id:UUID
     intent:str
     description:str
@@ -33,4 +34,4 @@ class AgentResponse(BaseDto):
     created_at:datetime
     account_id:int
 
-    agent_actions:list[AgentAction]
+    agent_actions:list[AgentAction] = []

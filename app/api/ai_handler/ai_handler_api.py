@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
@@ -10,9 +10,10 @@ from app.dtos.action.outputs import AgentAction, AgentHook
 
 router = APIRouter(prefix="/handle")
 
-@router.post("/transfer_money")
-async def handle_transfer_money(auth_user:Authentication, session:Session = Depends(get_session)):
+@router.post("/transfer_money/{message_id}")
+async def handle_transfer_money(message_id:UUID, auth_user:Authentication, session:Session = Depends(get_session)):
     result = AgentAction(
+        message_id=message_id,
         action_id=uuid4(),
         description="",
         intent="transfer_money",
