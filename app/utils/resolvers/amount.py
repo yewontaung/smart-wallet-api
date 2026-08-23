@@ -7,7 +7,7 @@ BURMESE_DIGITS = {
     '၅': '5', '၆': '6', '၇': '7', '၈': '8', '၉': '9'
 }
 
-# Burmese word-to-number mapping for units
+# Burmese word-to-number mapping (includes all spelling variations)
 BURMESE_WORDS = {
     'တစ်': 1, 'တ': 1, '၁': 1,
     'နှစ်': 2, '၂': 2,
@@ -15,21 +15,21 @@ BURMESE_WORDS = {
     'လေး': 4, '၄': 4,
     'ငါး': 5, '၅': 5,
     'ခြောက်': 6, '၆': 6,
-    'ခုနှစ်': 7, 'ခွန်': 7, '၇': 7,
+    'ခုနှစ်': 7, 'ခုနစ်': 7, 'ခွန်': 7, '၇': 7,
     'ရှစ်': 8, '၈': 8,
     'ကိုး': 9, '၉': 9,
-    'ဆယ်': 10, '၁၀': 10
+    'ဆယ်': 10, 'ဆယ့်': 10, '၁၀': 10
 }
 
-# Unit multipliers
-BURMESE_UNITS = {
-    'ရာ': 100,
-    'ထောင်': 1000,
-    'သောင်း': 10000,
-    'သိန်း': 100000,
-    'သန်း': 1000000,
-    'ကုဋေ': 10000000
-}
+# Unit multipliers ORDERED from largest to smallest
+BURMESE_UNITS = [
+    ('ကုဋေ', 10000000),
+    ('သန်း', 1000000),
+    ('သိန်း', 100000),
+    ('သောင်း', 10000),
+    ('ထောင်', 1000),
+    ('ရာ', 100),
+]
 
 
 def normalize_burmese_digits(text: str) -> str:
@@ -37,10 +37,40 @@ def normalize_burmese_digits(text: str) -> str:
     return "".join(BURMESE_DIGITS.get(char, char) for char in text)
 
 
+def parse_burmese_prefix(prefix: str) -> float:
+    """
+    Parses prefix words like 'ခုနစ်', 'ဆယ့်ငါး', '၁၅', or 'ငါး' into an integer/float.
+    """
+    prefix = prefix.strip()
+    if not prefix:
+        return 1.0
+
+    # 1. Direct word match
+    if prefix in BURMESE_WORDS:
+        return float(BURMESE_WORDS[prefix])
+
+    # 2. Try converting Burmese digits
+    clean_prefix = normalize_burmese_digits(prefix)
+    if clean_prefix.isdigit():
+        return float(clean_prefix)
+
+    # 3. Handle compound word prefixes (e.g., 'ဆယ့်ငါး' = 15, 'ဆယ့်ရှစ်' = 18)
+    if 'ဆယ့်' in prefix or 'ဆယ်' in prefix:
+        parts = re.split(r'ဆယ့်|ဆယ်', prefix)
+        tens_part = 10
+        units_part = 0
+        if len(parts) > 1 and parts[1]:
+            unit_word = parts[1].strip()
+            units_part = BURMESE_WORDS.get(unit_word, 0)
+        return float(tens_part + units_part)
+
+    return 1.0
+
+
 def resolve_burmese_amount(val: Optional[Union[str, int, float]]) -> Optional[str]:
     """
     Parses Burmese currency and numerical amounts into standard ASCII integer strings.
-    Handles digits, words, multipliers, and half-unit fractions ('ခွဲ').
+    Handles all spelling variations, compounds, digits, multipliers, and half-units ('ခွဲ').
     """
     if val is None:
         return None
@@ -54,20 +84,19 @@ def resolve_burmese_amount(val: Optional[Union[str, int, float]]) -> Optional[st
     if converted_digits.isdigit():
         return str(int(converted_digits))
 
-    # Clean text input (remove spaces and common suffixes like 'ကျပ်')
-    text = raw.replace(" ", "").replace("ကျပ်", "")
+    # Clean text input (remove spaces, connectors '့', and common suffixes like 'ကျပ်')
+    text = raw.replace(" ", "").replace("ကျပ်", "").replace("့", "")
 
-    # Check for half-unit modifier 'ခွဲ' (e.g., ၅သောင်းခွဲ = 50,000 + 5,000 = 55,000)
+    # Check for half-unit modifier 'ခွဲ' (e.g., ခုနစ်သောင်းခွဲ = 70,000 + 5,000 = 75,000)
     has_half = 'ခွဲ' in text
     if has_half:
         text = text.replace('ခွဲ', '')
 
-    base_val = 0
     multiplier = 1
     matched_unit = None
 
-    # Detect unit multiplier
-    for unit_name, unit_val in BURMESE_UNITS.items():
+    # Detect unit multiplier in strictly ordered array
+    for unit_name, unit_val in BURMESE_UNITS:
         if unit_name in text:
             matched_unit = unit_name
             multiplier = unit_val
@@ -75,19 +104,7 @@ def resolve_burmese_amount(val: Optional[Union[str, int, float]]) -> Optional[st
 
     if matched_unit:
         prefix = text.split(matched_unit)[0].strip()
-
-        # Extract numerical prefix (e.g., 'ငါး' in 'ငါးထောင်' or '၅' in '၅သောင်း')
-        if not prefix:
-            base_val = 1  # Default to 1 if unit stands alone like 'သိန်း'
-        elif prefix in BURMESE_WORDS:
-            base_val = BURMESE_WORDS[prefix]
-        else:
-            # Try converting Burmese digits from the prefix
-            clean_prefix = normalize_burmese_digits(prefix)
-            try:
-                base_val = float(clean_prefix)
-            except ValueError:
-                base_val = 1
+        base_val = parse_burmese_prefix(prefix)
 
         total = base_val * multiplier
 
@@ -97,7 +114,7 @@ def resolve_burmese_amount(val: Optional[Union[str, int, float]]) -> Optional[st
 
         return str(int(total))
 
-    # Fallback lookup for single-word amounts (e.g., 'ငါးထောင်')
+    # Fallback lookup for single-word amounts
     if text in BURMESE_WORDS:
         return str(BURMESE_WORDS[text])
 
