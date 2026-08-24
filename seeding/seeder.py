@@ -598,6 +598,14 @@ def seed_database():
                 owner_id=alice.account_id,
                 approved_by=admin.account_id,
             ),
+            BusinessProfile(
+                qualified_name="Phone Bill",
+                description="Phone Bill Provider.",
+                business_type=BusinessType.STANDALONE,
+                status=BusinessStatus.OPEN,
+                owner_id=alice.account_id,
+                approved_by=admin.account_id,
+            ),
         ]
 
         session.add_all(businesses)

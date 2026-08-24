@@ -70,10 +70,11 @@ def transfer_money(
 
 
 
-def send_money(form:SendMoneyForm, user_id:int, session:Session) -> ActionResult:
+def send_money(form:SendMoneyForm, user_id:int, session:Session, check_wallet=True) -> ActionResult:
 
-    if form.sender_wallet_id == form.receiver_wallet_id:
-        raise BusinessException("Invalid wallet.")
+    if check_wallet:
+        if form.sender_wallet_id == form.receiver_wallet_id:
+            raise BusinessException("Invalid wallet.")
 
     wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "user_id", user_id)
     if not verify_password(form.pin, wallet_user.hashed_pin):
@@ -195,5 +196,17 @@ def pay_bill(form:PayBillForm, user_id:int, session:Session) -> ActionResult:
         action_type="send_money", 
         message=f"{form.amount} is paid to {business.qualified_name}")
 
-def top_up(form:MobileTopUpForm, auth_user:int, session:Session) -> ActionResult:
-    return
+def top_up(form:MobileTopUpForm, user_id:int, session:Session) -> ActionResult:
+    sender_wallet = session.exec(select(Wallet).where(Wallet.wallet_account_id == user_id)).first()
+
+    bill_profile = session.exec(select(BusinessProfile).where(BusinessProfile.qualified_name == "Phone Bill")).first()
+    safe_call(bill_profile, "Bill provider", "qualified_name", "Phone Bill")
+    receiver_wallet = session.exec(select(Wallet).where(Wallet.wallet_account_id == bill_profile.owner_id)).first()
+    return send_money(
+        SendMoneyForm(
+            amount=form.amount,
+            note="Phone bill",
+            pin=form.pin,
+            sender_wallet_id=sender_wallet.wallet_id,
+            receiver_wallet_id=receiver_wallet.wallet_id,
+        ), user_id, session, check_wallet=False,),

@@ -1,9 +1,13 @@
 
 from uuid import uuid4
 
+from sqlmodel import Session, select
+
+from app.data import database
+from app.data.models import Wallet
 from app.deps import agent, ws
 from agentic_runtime.runtime.context import RuntimeContext
-from agentic_runtime.schemas.intent import TransferMoney, MobileTopup
+from agentic_runtime.schemas.intent import OutOfScope, TransferMoney, MobileTopup, ViewBalance
 
 from app.dtos.action.outputs import AgentAction, AgentHook
 from app.dtos.base import WebSocketResponse
@@ -50,7 +54,7 @@ async def mobile_topup_tool(intent:MobileTopup, context:RuntimeContext):
             "Phone Bill": intent.amount,
         },
         agent_hook=AgentHook(
-            hook_url="/ai/handle/mobile_topup",
+            hook_url=f"/ai/handle/mobile_topup/{message_id}",
             form_payload=intent.model_dump(mode="json"),
         )
     )
@@ -59,3 +63,51 @@ async def mobile_topup_tool(intent:MobileTopup, context:RuntimeContext):
         message_type="agent_action",
         payload=action,
     ).json_response())
+
+@agent.tool(OutOfScope)
+async def out_of_scope_tool(intent:OutOfScope, context:RuntimeContext):
+
+    account_id:int = context.get_value("account_id", str)
+    message_id:int = context.get_value("message_id", str)
+
+    await ws.connection_manager.send_payload_by_id(
+        account_id,
+        WebSocketResponse(
+            message_type="agent_action",
+            payload=AgentAction(
+                message_id=message_id,
+                intent="out_of_scope",
+                action_id=uuid4(),
+                description="Agent is not able to do the task"
+            )
+        ).json_response()
+
+    )
+
+@agent.tool(ViewBalance)
+async def view_balance_tool(intent:ViewBalance, context:RuntimeContext):
+    account_id:int = context.get_value("account_id", str)
+    message_id:int = context.get_value("message_id", str)
+
+    with Session(database.engine) as session:
+        wallet = session.exec(select(Wallet).where(Wallet.wallet_account_id == account_id)).first()
+        database.safe_call(wallet, "Wallet", "wallet_account_id", account_id)
+        balance = wallet.current_balance
+        phone = wallet.wallet_user.phone_no
+
+    await ws.connection_manager.send_payload_by_id(
+        account_id,
+        WebSocketResponse(
+            message_type="agent_action",
+            payload=AgentAction(
+                action_id=uuid4(),
+                message_id=message_id,
+                description="Your Account Balance Info",
+                intent="view_balance",
+                form_display={
+                    "Balance": balance,
+                    "Phone": phone,
+                }
+            )
+        ).json_response()
+    )

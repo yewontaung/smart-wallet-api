@@ -7,8 +7,10 @@ from sqlmodel import Session
 from app.data.database import get_session
 from app.deps.auth import Authentication
 from app.dtos.action.outputs import AgentAction, AgentHook
-from app.dtos.ai.inputs import TransferMoneyRequest
+from app.dtos.ai.inputs import TransferMoneyRequest, MobileTopupRequest
 from app.services.action import ai_service
+from app.utils.resolvers.amount import resolve_burmese_amount
+from app.utils.resolvers.phone import normalize_to_ascii_digits
 
 
 router = APIRouter(prefix="/handle")
@@ -46,6 +48,33 @@ async def handle_transfer_money(
                 "amount": resolved.get("amount"),
                 "note": ""
             }
+        )
+    )
+
+    return result
+
+@router.post("/mobile_topup/{message_id}")
+def handle_mobile_touput(
+    message_id:UUID, 
+    auth_user:Authentication, 
+    form:MobileTopupRequest,
+    session:Session = Depends(get_session)):
+
+    phone =  normalize_to_ascii_digits(form.phone_number)
+    amount = resolve_burmese_amount(form.amount)
+
+    result = AgentAction(
+        action_id=uuid4(),
+        message_id=message_id,
+        description=f"Phone bill topup to {form.phone_number}",
+        intent="mobile_topup",
+        agent_hook=AgentHook(
+            require_pin=True,
+            hook_url="/wallet-user/action/mobile-topup",
+            require_payload={
+                "amount": amount,
+                "phone_no": phone
+            },
         )
     )
 

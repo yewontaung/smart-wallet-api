@@ -30,6 +30,6 @@ class MobileTopUpForm(BaseDto):
     amount:float = Field(ge=1000)
     phone_no:str = Field(min_length=5)
     pin:str = Field(max_length=6, min_length=6)
-    sender_wallet_id:int
-    receiver_wallet_id:int
-    business_id:int
+    # sender_wallet_id:int
+    # receiver_wallet_id:int
+    # business_id:int
