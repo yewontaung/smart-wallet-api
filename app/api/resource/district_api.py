@@ -17,6 +17,10 @@ def search(
 ):
     return district_service.search(search, session)
 
+@router.get("/{district_id}/townships")
+def townships(district_id:int, session:Session = Depends(get_session)):
+    return district_service.get_townships_by_district_id(district_id, session)
+
 @router.post("/")
 def add_district(
     form:DistrictForm,
