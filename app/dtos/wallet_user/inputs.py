@@ -15,6 +15,10 @@ class WalletUserForm(BaseDto):
     pin:str
     confirm_pin:str
 
+class WalletUserRememberForm(BaseDto):
+    rememberToken:str
+    pin:str = Field(min_length=6, max_length=6)
+
 class WalletUserSignInForm(BaseDto):
     phone_no:str
 
@@ -27,3 +31,8 @@ class BusinessProfileForm(BaseDto):
     description:str
     banner_url:Optional[str] = Field(default=None)
     business_type:BusinessType
+
+
+class AIMessageForm(BaseDto):
+
+    prompt:str

@@ -4,10 +4,11 @@ from sqlmodel import Session, col, select
 
 from app.data.database import safe_call
 from app.data.enums import TransactionStatus, TransactionType
-from app.data.models import BusinessProfile, Transaction, TransactionLog, Wallet, WalletOperation
+from app.data.models import BusinessProfile, Transaction, TransactionLog, Wallet, WalletOperation, WalletUserAccount
 from app.dtos.action.inputs import MobileTopUpForm, PayBillForm, SendMoneyForm
 from app.dtos.action.outputs import ActionResult
 from app.utils.exceptions import BusinessException, InsufficientBalanceException, InvalidAmountException, UnauthorizedWalletException
+from app.utils.hashing import verify_password
 
 
 def transfer_money(
@@ -69,10 +70,15 @@ def transfer_money(
 
 
 
-def send_money(form:SendMoneyForm, user_id:int, session:Session) -> ActionResult:
+def send_money(form:SendMoneyForm, user_id:int, session:Session, check_wallet=True) -> ActionResult:
 
-    if form.sender_wallet_id == form.receiver_wallet_id:
-        raise BusinessException("Invalid wallet.")
+    if check_wallet:
+        if form.sender_wallet_id == form.receiver_wallet_id:
+            raise BusinessException("Invalid wallet.")
+
+    wallet_user = safe_call(session.get(WalletUserAccount, user_id), "WalletUserAccount", "user_id", user_id)
+    if not verify_password(form.pin, wallet_user.hashed_pin):
+        raise BusinessException("Wrong pin.")
 
     # locak wallets
     wallets = {
@@ -159,13 +165,16 @@ def pay_bill(form:PayBillForm, user_id:int, session:Session) -> ActionResult:
 
     if receiver_wallet.wallet_account_id != business.owner_id:
         raise BusinessException("Invalid receiver wallet.")
-
+    
     # validation
     if sender_wallet.wallet_account_id != user_id:
         raise UnauthorizedWalletException("Unauthorized wallet user.")
 
     if form.amount <= 0:
         raise InvalidAmountException("Invalid amount to transfer.")
+
+    if verify_password(form.pin, sender_wallet.wallet_user.hashed_pin):
+        raise BusinessException("Wrong pin.")
 
     operation = safe_call(session.exec(select(WalletOperation).where(WalletOperation.operation_name == "Business Payment")).first(), "WalletOperation", "operation_name", "Business Payment")
 
@@ -187,5 +196,17 @@ def pay_bill(form:PayBillForm, user_id:int, session:Session) -> ActionResult:
         action_type="send_money", 
         message=f"{form.amount} is paid to {business.qualified_name}")
 
-def top_up(form:MobileTopUpForm, auth_user:int, session:Session) -> ActionResult:
-    return
+def top_up(form:MobileTopUpForm, user_id:int, session:Session) -> ActionResult:
+    sender_wallet = session.exec(select(Wallet).where(Wallet.wallet_account_id == user_id)).first()
+
+    bill_profile = session.exec(select(BusinessProfile).where(BusinessProfile.qualified_name == "Phone Bill")).first()
+    safe_call(bill_profile, "Bill provider", "qualified_name", "Phone Bill")
+    receiver_wallet = session.exec(select(Wallet).where(Wallet.wallet_account_id == bill_profile.owner_id)).first()
+    return send_money(
+        SendMoneyForm(
+            amount=form.amount,
+            note="Phone bill",
+            pin=form.pin,
+            sender_wallet_id=sender_wallet.wallet_id,
+            receiver_wallet_id=receiver_wallet.wallet_id,
+        ), user_id, session, check_wallet=False,),

@@ -1,5 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.ai import ai_api
+from app.api.ai_handler import ai_handler_api
+from app.api import global_socket
 from app.api.manager import (
     account_api, 
     auth_api as manager_auth_api,
@@ -8,21 +11,26 @@ from app.api.manager import (
     manager_api, 
     me_api as manager_me_api,
     support_chat_api as manager_support_chat_api,
-    transaction_api)
+    transaction_api as manager_transaction_api)
 from app.api.resource import district_api, township_api
 from app.api.wallet_user import (
     action_api,
-    ai_api,
     auth_api,
     business_api,
     me_api,
-    support_chat_api,)
+    support_chat_api,
+    transaction_api)
+from app.deps.auth import require_authentication
 
 
 annonymous_router = APIRouter(tags=["annonymous",])
 resource_router = APIRouter(prefix="/resources", tags=["resources"])
 manager_router = APIRouter(prefix="/manager", tags=["manager"])
-wallet_user_router = APIRouter(prefix="/wallet-user", tags=["wallet-user"])
+wallet_user_router = APIRouter(prefix="/wallet-user", tags=["wallet-user"], dependencies=[Depends(require_authentication)])
+ai_router = APIRouter(prefix="/ai", dependencies=[Depends(require_authentication)],tags=["ai"])
+ws_router = APIRouter(prefix="/ws", tags=["sockets"])
+
+ws_router.include_router(router=global_socket.router)
 
 # annonymous routes registration
 annonymous_router.include_router(prefix="/manager", router=manager_auth_api.router)
@@ -35,7 +43,7 @@ resource_router.include_router(router=district_api.router)
 # Manager routes registration
 manager_router.include_router(router=account_api.router)
 manager_router.include_router(router=manager_me_api.router)
-manager_router.include_router(router=transaction_api.router)
+manager_router.include_router(router=manager_transaction_api.router)
 manager_router.include_router(router=manager_api.router)
 manager_router.include_router(router=manager_business_api.router)
 manager_router.include_router(router=manager_support_chat_api.router)
@@ -45,6 +53,9 @@ manager_router.include_router(router=business_request_api.router)
 wallet_user_router.include_router(router=me_api.router)
 wallet_user_router.include_router(router=support_chat_api.router)
 wallet_user_router.include_router(router=action_api.router)
-wallet_user_router.include_router(router=ai_api.router)
 wallet_user_router.include_router(router=business_api.router)
+wallet_user_router.include_router(router=transaction_api.router)
 
+# AI
+ai_router.include_router(router=ai_handler_api.router)
+ai_router.include_router(router=ai_api.router)

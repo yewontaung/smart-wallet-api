@@ -1,12 +1,25 @@
 from sqlmodel import Session, select, func
 
+from app.data.database import safe_call
 from app.data.meta_models import District, Township
 from app.data.models import Address
 from app.dtos.base import ModificationResult
 from app.dtos.manager.inputs import DistrictForm
-from app.dtos.shared.outputs import DistrictInfo
+from app.dtos.shared.outputs import DistrictInfo, TownshipInfo
 from app.dtos.shared.searches import LocationSearch
 
+
+
+def get_townships_by_district_id(district_id:int, session:Session) -> list[TownshipInfo]:
+    district = safe_call(session.get(District, district_id), "District", "district_id", district_id)
+    return [TownshipInfo(
+        district_id=district_id,
+        created_at=item.created_at,
+        district_name=district.district_name,
+        township_id=item.township_id,
+        township_name=item.township_name,
+        updated_at=item.updated_at,
+    ) for item in district.townships]
 
 def search(
     search: LocationSearch,

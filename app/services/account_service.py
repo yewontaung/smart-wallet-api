@@ -11,13 +11,14 @@ from app.data.models import (
 )
 from app.data.meta_models import Township
 from app.data.database import safe_call
-from app.data.enums import WalletType
+from app.data.enums import ManagerRole, UserType, WalletType, WalletUserType
 
 from app.dtos.base import ModificationResult, PageResult
 from app.dtos.manager.outputs import AccountListItem
 from app.dtos.manager.searches import AccountSearch
 from app.dtos.shared.outputs import (
     AccountDetail,
+    ProfileInfo,
     ReceiverProfile,
     AddressInfo,
     NRCInfo,
@@ -25,6 +26,8 @@ from app.dtos.shared.outputs import (
 )
 from app.dtos.shared.searches import ReceiverSearch
 from app.dtos.wallet_user.inputs import WalletUserForm
+from app.dtos.wallet_user.outputs import WalletBalance
+from app.utils.exceptions import BusinessException
 
 
 # =========================================================
@@ -437,18 +440,21 @@ def approve_wallet_user(
 # Search Receiver
 # =========================================================
 
-def search_receiver(search:ReceiverSearch, session:Session) -> ReceiverProfile:
+def search_receiver(search:ReceiverSearch, account_id:int, session:Session) -> ReceiverProfile:
     wallet_user = safe_call(
         session.exec(
             select(WalletUserAccount).options(
                 selectinload(WalletUserAccount.account)
             ).where(
-                WalletUserAccount.phone_no == search.phone_no
+                WalletUserAccount.phone_no == search.phone_no,
             )
         ).first(), 
         "WalletUserAccount", 
         "phone", 
         search.phone_no)
+
+    if wallet_user.account_id == account_id:
+        raise BusinessException("You cannot send to yourself.")
     
     wallet = safe_call(
         session.exec(
@@ -467,4 +473,45 @@ def search_receiver(search:ReceiverSearch, session:Session) -> ReceiverProfile:
         wallet_id=wallet.wallet_id,
         full_name=wallet_user.account.full_name,   
         phone_no=wallet_user.phone_no,
+    )
+
+def profile_by_account_id(account_id:int, session:Session) -> ProfileInfo:
+    account = safe_call(session.get(Account, account_id), "Account", "account_id", account_id)
+    if account.user_type == UserType.WALLET_USER:
+        wallet_account = safe_call(session.get(WalletUserAccount, account_id), "WalletUserAccount", "account_id", account_id)
+        return ProfileInfo(
+            account_id=account.account_id,
+            full_name=account.full_name,
+            phone=wallet_account.phone_no,
+            role="normal-wallet-user" if wallet_account.account_type == WalletUserType.NORMAL else "special-wallet-user"
+        )
+    else:
+        manager_account = safe_call(session.get(ManagerAccount, account_id), "ManagerAccount", "account_id", account_id)
+        return ProfileInfo(
+            account_id=account.account_id,
+            full_name=account.full_name,
+            phone=manager_account.phone_no,
+            role=(
+                "admin-manager" if manager_account.role == ManagerRole.ADMIN 
+                else "normal-manager" if manager_account.role == ManagerRole.MODERATOR 
+                else "supervisor-manager"),
+        )
+
+def get_balance_by_account_id(account_id:int, session:Session):
+    wallet = safe_call(
+        session.exec(select(Wallet)
+            .options(
+                selectinload(Wallet.wallet_user)
+            )
+            .where(Wallet.wallet_account_id == account_id, Wallet.wallet_type == "Funding")).one_or_none(),
+        "Wallet",
+        "account_id",
+        account_id,
+    )
+
+    return WalletBalance(
+        wallet_id=wallet.wallet_id,
+        account_id=account_id,
+        phone_no=wallet.wallet_user.phone_no,
+        current_balance=wallet.current_balance
     )

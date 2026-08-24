@@ -5,6 +5,7 @@ from sqlmodel import Field, Relationship
 
 from app.data.base import AuditableModel
 from app.data.enums import (
+    AIActionStatus,
     BusinessApprovalStatus,
     BusinessStatus, 
     BusinessType, 
@@ -54,7 +55,7 @@ class Address(AuditableModel, table=True):
 class WalletUserAccount(AuditableModel, table=True):
     account_id:int = Field(primary_key=True, foreign_key="account.account_id", nullable=False)
     phone_no:str = Field(nullable=False, unique=True, index=True)
-    pin:str = Field(nullable=False)
+    hashed_pin:str = Field(nullable=False)
 
     nick_name:Optional[str] = Field(nullable=True)
 
@@ -75,6 +76,10 @@ class WalletUserAccount(AuditableModel, table=True):
     wallets:list["Wallet"] = Relationship(back_populates="wallet_user")
     support_chat:Optional["CustomerSupportChat"] = Relationship(back_populates="wallet_user")
 
+    @property
+    def user_role(self):
+        return "normal_user" if self.account_type == WalletUserType.NORMAL else "special_user"
+
 
 class ManagerAccount(AuditableModel, table=True):
     account_id:int = Field(primary_key=True, foreign_key="account.account_id", nullable=False)
@@ -87,6 +92,16 @@ class ManagerAccount(AuditableModel, table=True):
         "foreign_keys": "[ManagerAccount.account_id]"
     })
 
+    @property
+    def user_type(self):
+        match self.role:
+            case ManagerRole.ADMIN:
+                value = "admin"
+            case ManagerRole.MODERATOR:
+                value = "moderator"
+            case ManagerRole.SUPER_ADMIN:
+                value = "super_admin"
+        return value
 
 class Wallet(AuditableModel, table=True):
     wallet_id:Optional[int] = Field(primary_key=True, default=None)
@@ -198,3 +213,23 @@ class ChatMessage(AuditableModel, table=True):
 
     support_chat_id:int = Field(foreign_key="customersupportchat.chat_id", ondelete="CASCADE")
     support_chat:Optional[CustomerSupportChat] = Relationship(back_populates="messages")
+
+class AIMessage(AuditableModel):
+    message_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
+    prompt:str = Field(nullable=False)
+    is_success:bool = Field(default=True)
+
+    account_id:int = Field(foreign_key="account.account_id")
+    account:Optional[Account] = Relationship()
+
+    ai_responses:list["AIResponse"] = Relationship(back_populates="ai_message")
+
+class AIResponse(AuditableModel):
+    response_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
+    intent:str = Field(nullable=False)
+    detail:str = Field(nullable=True)
+    description:str = Field(nullable=True)
+    action_status:AIActionStatus = Field(default=AIActionStatus.PENDING)
+
+    message_id:int = Field(foreign_key="aimessage.message_id")
+    ai_message:AIMessage = Relationship(back_populates="ai_responses")
