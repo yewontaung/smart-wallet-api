@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from app.data.database import get_session
-from app.deps.auth import ManagerAuthentication
+from app.deps.auth import Authentication
 from app.dtos.manager.inputs import DistrictForm
 from app.dtos.shared.searches import LocationSearch
 from app.services.resource import district_service
@@ -17,10 +17,14 @@ def search(
 ):
     return district_service.search(search, session)
 
+@router.get("/{district_id}/townships")
+def townships(district_id:int, session:Session = Depends(get_session)):
+    return district_service.get_townships_by_district_id(district_id, session)
+
 @router.post("/")
 def add_district(
     form:DistrictForm,
-    auth_user:ManagerAuthentication,
+    auth_user:Authentication,
     session:Session = Depends(get_session)
 ):
     return district_service.save_district(form, auth_user.user_id, session)

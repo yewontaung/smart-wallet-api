@@ -44,3 +44,9 @@ class WalletUserStatus(str, Enum):
     PENDING = "Pending"
     VERIFIED = "Verified"
     FREEZE = "Freeze"
+
+class AIActionStatus(str, Enum):
+    PENDING = "Pending"
+    COMPLETED = "Completed"
+    CANCELLED = "Cancelled"
+    EXPIRED = "Expired"

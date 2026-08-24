@@ -9,3 +9,17 @@ class ResourceNotFoundException(BaseException):
 
 class BusinessException(BaseException):
     ...
+
+class InvalidAmountException(BaseException):
+    ...
+
+class InsufficientBalanceException(BaseException):
+
+    def __init__(self, *args):
+        super().__init__("Insufficient balance to transfer.", *args)
+
+class UnauthorizedWalletException(BaseException):
+    ...
+
+class SecurityException(BaseException):
+    ...

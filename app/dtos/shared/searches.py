@@ -1,9 +1,14 @@
-from datetime import datetime
-from typing import Optional
+from sqlmodel import col, or_
+from sqlmodel.sql.expression import SelectOfScalar
+
+from datetime import datetime, timezone
+from typing import Optional, Type, TypeVar
 
 from app.data.enums import BusinessType
+from app.data.models import Account, BusinessApprovalRequest
 from app.dtos.base import BaseDto
 
+T = TypeVar("T")
 
 class TransactionSearch(BaseDto):
 
@@ -24,6 +29,30 @@ class BusinessProfileSearch(BaseDto):
 
     created_from:Optional[datetime] = None
     created_to:Optional[datetime] = None
+
+    def where(
+            self, 
+            query:SelectOfScalar[T], 
+            root:Type[BusinessApprovalRequest], 
+            join_account:Type[Account]):
+        if self.q:
+            query = query.where(
+                or_(
+                    col(root.qualified_name).ilike(f"{self.q}%"),
+                    col(join_account.full_name).ilike(f"{self.q}%")
+                )
+            )
+
+        if self.business_type:
+            query = query.where(root.business_type == self.business_type)
+
+        if self.created_from:
+            query = query.where(root.created_at >= self.created_from)
+
+        if self.created_to:
+            query= query.where(root.created_at <= self.created_to)
+        
+        return query
 
 class MessageSearch(BaseDto):
     q:Optional[str] = None # user name, phone no, message text

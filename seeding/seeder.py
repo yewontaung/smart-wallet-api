@@ -33,6 +33,7 @@ from app.utils import env
 from app.utils.hashing import hash_password
 
 hashed_password = hash_password(env.DEMO_PASSWORD)
+hashed_pin = hash_password(env.DEMO_PIN)
 
 def seed_database():
     with Session(engine) as session:
@@ -316,7 +317,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=alice.account_id,
                 phone_no="09411111111",
-                pin="1234",
+                hashed_pin=hashed_pin,
                 nick_name="Alice",
                 account_type=WalletUserType.SPECIAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -325,7 +326,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=bob.account_id,
                 phone_no="09422222222",
-                pin="1234",
+                hashed_pin=hashed_pin,
                 nick_name="Bob",
                 account_type=WalletUserType.NORMAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -334,7 +335,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=charlie.account_id,
                 phone_no="09433333333",
-                pin="1234",
+                hashed_pin=hashed_pin,
                 nick_name="Charlie",
                 account_type=WalletUserType.NORMAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -343,7 +344,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=david.account_id,
                 phone_no="09444444444",
-                pin="1234",
+                hashed_pin=hashed_pin,
                 nick_name="David",
                 account_type=WalletUserType.SPECIAL,
                 account_status=WalletUserStatus.VERIFIED,
@@ -352,7 +353,7 @@ def seed_database():
             WalletUserAccount(
                 account_id=emma.account_id,
                 phone_no="09455555555",
-                pin="1234",
+                hashed_pin=hashed_pin,
                 nick_name="Emma",
                 account_type=WalletUserType.NORMAL,
                 account_status=WalletUserStatus.PENDING,
@@ -597,6 +598,14 @@ def seed_database():
                 owner_id=alice.account_id,
                 approved_by=admin.account_id,
             ),
+            BusinessProfile(
+                qualified_name="Phone Bill",
+                description="Phone Bill Provider.",
+                business_type=BusinessType.STANDALONE,
+                status=BusinessStatus.OPEN,
+                owner_id=alice.account_id,
+                approved_by=admin.account_id,
+            ),
         ]
 
         session.add_all(businesses)
@@ -669,7 +678,7 @@ def seed_database():
         print("  09444444444 - David")
         print("  09455555555 - Emma")
         print()
-        print("Demo PIN: 1234")
+        print("Demo PIN: 123456")
 
 
 if __name__ == "__main__":
