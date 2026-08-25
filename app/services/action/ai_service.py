@@ -2,11 +2,11 @@ from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 from agentic_runtime.runtime.context import RuntimeContext
 
 from app.data.database import safe_call
-from app.data.models import Wallet, WalletUserAccount
+from app.data.models import Contact, Wallet, WalletUserAccount
 from app.deps import agent, ws
 from app.dtos.action.outputs import AgentResponse
 from app.dtos.ai.inputs import TransferMoneyRequest
@@ -14,6 +14,7 @@ from app.dtos.base import WebSocketResponse
 from app.dtos.shared.searches import ReceiverSearch
 from app.dtos.wallet_user.inputs import AIMessageForm
 from app.services import account_service
+from app.utils.exceptions import BusinessException
 from app.utils.resolvers.amount import resolve_burmese_amount
 from app.utils.resolvers.phone import is_phone_number, normalize_to_ascii_digits
 
@@ -54,6 +55,16 @@ def resolve_send_money_form(form:TransferMoneyRequest, account_id:int, session:S
     if is_phone_number(form.receiver):
         phone_number = normalize_to_ascii_digits(form.receiver)
         profile = account_service.search_receiver(ReceiverSearch(phone_no=phone_number), account_id=account_id, session=session)
+        payload["receiver"] = f"{profile.full_name} - {profile.phone_no}"
+        payload["receiver_wallet_id"] = profile.wallet_id
+    else:
+        contact = session.exec(
+            select(Contact).where(Contact.owner_id == account_id, col(Contact.contact_name).ilike(form.receiver))
+        ).first()
+        if not contact:
+            raise BusinessException(f"Cannot find {form.receiver} in your contact.")
+
+        profile = account_service.search_receiver(ReceiverSearch(phone_no=contact.contact_phone), account_id=account_id, session=session)
         payload["receiver"] = f"{profile.full_name} - {profile.phone_no}"
         payload["receiver_wallet_id"] = profile.wallet_id
 
