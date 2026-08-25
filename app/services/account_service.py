@@ -1,9 +1,10 @@
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, func, update
 from sqlalchemy.orm import selectinload
 
 from app.data.models import (
     Account,
     Address,
+    Contact,
     ManagerAccount,
     NRC,
     Wallet,
@@ -453,12 +454,12 @@ def create_wallet_user_account(
                 last_balance=0,
                 approved_by=1,
                 version=1,
-
             )
         ]
     )
 
     session.add(wallet_user)
+    session.exec(update(Contact).where(Contact.contact_phone == wallet_user.phone_no).values(has_account = True))
 
     session.commit()
     session.refresh(account)

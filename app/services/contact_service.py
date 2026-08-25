@@ -43,7 +43,13 @@ def create(form:ContactForm, account_id:int, session:Session) -> ModificationRes
     session.refresh(contact)
 
     return ModificationResult(
-        result_item=contact.contact_id,
+        result_item=ContactListItem(
+            contact_id=contact.contact_id,
+            contact_phone=contact.contact_phone,
+            has_account=contact.has_account,
+            contact_name=contact.contact_name,
+            owner_id=contact.owner_id,
+        ),
         is_success=True,
         message=f"Contact with phone {form.phone} is successfully created."
     )
