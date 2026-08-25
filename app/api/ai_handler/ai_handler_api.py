@@ -22,9 +22,6 @@ async def handle_transfer_money(
     form:TransferMoneyRequest,
     session:Session = Depends(get_session)):
 
-    print("===========================")
-    print(form)
-    print("===========================")
     resolved = ai_service.resolve_send_money_form(form, auth_user.user_id, session)
 
     result = AgentAction(

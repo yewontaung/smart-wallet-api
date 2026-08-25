@@ -36,3 +36,7 @@ class BusinessProfileForm(BaseDto):
 class AIMessageForm(BaseDto):
 
     prompt:str
+
+class ContactForm(BaseDto):
+    phone:str
+    name:str

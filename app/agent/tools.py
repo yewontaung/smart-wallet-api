@@ -7,7 +7,7 @@ from app.data import database
 from app.data.models import Wallet
 from app.deps import agent, ws
 from agentic_runtime.runtime.context import RuntimeContext
-from agentic_runtime.schemas.intent import OutOfScope, TransferMoney, MobileTopup, ViewBalance
+from agentic_runtime.schemas.intent import OutOfScope, PayBill, TransferMoney, MobileTopup, ViewBalance
 
 from app.dtos.action.outputs import AgentAction, AgentHook
 from app.dtos.base import WebSocketResponse
@@ -64,8 +64,9 @@ async def mobile_topup_tool(intent:MobileTopup, context:RuntimeContext):
         payload=action,
     ).json_response())
 
+@agent.tool(PayBill)
 @agent.tool(OutOfScope)
-async def out_of_scope_tool(intent:OutOfScope, context:RuntimeContext):
+async def out_of_scope_tool(intent:OutOfScope | PayBill, context:RuntimeContext):
 
     account_id:int = context.get_value("account_id", str)
     message_id:int = context.get_value("message_id", str)
@@ -78,7 +79,7 @@ async def out_of_scope_tool(intent:OutOfScope, context:RuntimeContext):
                 message_id=message_id,
                 intent="out_of_scope",
                 action_id=uuid4(),
-                description="Agent is not able to do the task"
+                description=f"Agent is not able to do the task : {intent.__class__.__name__}"
             )
         ).json_response()
 

@@ -75,6 +75,7 @@ class WalletUserAccount(AuditableModel, table=True):
 
     wallets:list["Wallet"] = Relationship(back_populates="wallet_user")
     support_chat:Optional["CustomerSupportChat"] = Relationship(back_populates="wallet_user")
+    contacts:list["Contact"] = Relationship(back_populates="owner")
 
     @property
     def user_role(self):
@@ -233,3 +234,13 @@ class AIResponse(AuditableModel):
 
     message_id:int = Field(foreign_key="aimessage.message_id")
     ai_message:AIMessage = Relationship(back_populates="ai_responses")
+
+class Contact(AuditableModel, table=True):
+    contact_id:Optional[UUID] = Field(primary_key=True, default_factory=uuid4)
+    contact_name:str = Field()
+    contact_phone:str = Field()
+    has_account:bool = Field(default=False)
+    owner_id:int = Field(foreign_key="walletuseraccount.account_id")
+    owner:WalletUserAccount = Relationship(back_populates="contacts", sa_relationship_kwargs={
+        "foreign_keys": "[Contact.owner_id]"
+    })

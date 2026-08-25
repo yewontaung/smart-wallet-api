@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Optional
+from uuid import UUID
 
 from app.dtos.base import BaseDto
 from app.dtos.shared.outputs import UserRole
@@ -25,3 +26,10 @@ class WalletBalance(BaseDto):
     account_id:int
     current_balance:float
     phone_no:str
+
+class ContactListItem(BaseDto):
+    contact_id:UUID
+    contact_name:str
+    owner_id:int
+    contact_phone:str
+    has_account:bool
