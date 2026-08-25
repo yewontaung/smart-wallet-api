@@ -11,7 +11,7 @@ from app.data.models import (
 )
 from app.data.meta_models import Township
 from app.data.database import safe_call
-from app.data.enums import ManagerRole, UserType, WalletType, WalletUserType
+from app.data.enums import ManagerRole, UserType, WalletType, WalletUserStatus, WalletUserType
 
 from app.dtos.base import ModificationResult, PageResult
 from app.dtos.manager.outputs import AccountListItem
@@ -28,6 +28,7 @@ from app.dtos.shared.searches import ReceiverSearch
 from app.dtos.wallet_user.inputs import WalletUserForm
 from app.dtos.wallet_user.outputs import WalletBalance
 from app.utils.exceptions import BusinessException
+from app.utils.hashing import hash_password
 
 
 # =========================================================
@@ -421,7 +422,47 @@ def create_wallet_user_account(
     form: WalletUserForm,
     session: Session,
 ) -> ModificationResult:
-    return
+    account = Account(
+        full_name=form.full_name,
+        address=Address(
+            address_content=form.address_form.address_content,
+            township_id=form.address_form.township_id,
+        ),
+        is_deleted=False,
+        is_disable=False,
+        user_type=UserType.WALLET_USER,
+        nrc=NRC(
+            district_code=form.nrc_form.district_code,
+            nrc_no=form.nrc_form.nrc_no,
+            nrc_type=form.nrc_form.nrc_type,
+            township_code=form.nrc_form.township_code,
+        )
+    )
+
+    session.add(account)
+
+    wallet_user = WalletUserAccount(
+        phone_no=form.phone_no,
+        account_status=WalletUserStatus.VERIFIED,
+        approved_by=1,
+        hashed_pin=hash_password(form.pin),
+        account=account,
+        wallets=[
+            Wallet(
+                current_balance=0,
+                last_balance=0,
+                approved_by=1,
+                version=1,
+
+            )
+        ]
+    )
+
+    session.add(wallet_user)
+
+    session.commit()
+    session.refresh(account)
+    return ModificationResult(is_success=True, result_item=account.account_id)
 
 
 # =========================================================

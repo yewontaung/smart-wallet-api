@@ -17,6 +17,7 @@ from app.api.wallet_user import (
     action_api,
     auth_api,
     business_api,
+    contact_api,
     me_api,
     support_chat_api,
     transaction_api)
@@ -55,6 +56,7 @@ wallet_user_router.include_router(router=support_chat_api.router)
 wallet_user_router.include_router(router=action_api.router)
 wallet_user_router.include_router(router=business_api.router)
 wallet_user_router.include_router(router=transaction_api.router)
+wallet_user_router.include_router(router=contact_api.router)
 
 # AI
 ai_router.include_router(router=ai_handler_api.router)
